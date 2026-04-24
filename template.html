@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TestPermis.fr - Vidéo Dynamique</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --primary: #4facfe;
+    --primary2: #00f2fe;
+    --secondary: #f5576c;
+    --bg: #0a0a2e;
+    --bg2: #1a1a4e;
+    --danger1: #ff4757; --danger2: #c44569;
+    --success1: #2ed573; --success2: #05c46b;
+    --warning1: #ffa502; --warning2: #ff6348;
+    --font: 'Montserrat', sans-serif;
+    --vw: 1080px;
+    --vh: 1920px;
+  }
+
+  body {
+    width: var(--vw); height: var(--vh); overflow: hidden;
+    font-family: var(--font); background: var(--bg); color: white;
+    position: relative;
+  }
+
+  /* ========== SÉQUENCES ========== */
+  .sequence {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+  }
+
+  /* ========== WATERMARK ========== */
+  .watermark {
+    position: absolute; top: 30px; right: 30px; z-index: 200;
+    opacity: 0.5; font-size: 32px; font-weight: 700;
+    letter-spacing: 2px; color: rgba(255,255,255,0.6);
+  }
+  .watermark img { width: 130px; height: 130px; object-fit: contain; }
+
+  /* ========== DIFFICULTY BADGE ========== */
+  .difficulty-badge {
+    position: absolute; top: 30px; left: 30px; z-index: 200;
+    padding: 8px 24px; border-radius: 30px; font-size: 20px; font-weight: 900;
+    text-transform: uppercase; letter-spacing: 3px;
+  }
+  .difficulty-badge.facile { background: linear-gradient(135deg, var(--success1), var(--success2)); }
+  .difficulty-badge.moyen { background: linear-gradient(135deg, var(--warning1), var(--warning2)); }
+  .difficulty-badge.difficile { background: linear-gradient(135deg, var(--danger1), var(--danger2)); }
+
+  /* ========== INTRO ========== */
+  #intro { background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%); }
+  .logo-container {
+    text-align: center; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; width: 100%;
+  }
+  .logo-image { width: 220px; height: 220px; object-fit: contain; margin-bottom: 20px; display: block; margin-left: auto; margin-right: auto; }
+  .logo-icon {
+    width: 200px; height: 200px;
+    background: linear-gradient(135deg, var(--primary), var(--primary2));
+    border-radius: 40px; display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 30px; font-size: 80px; font-weight: 900;
+    box-shadow: 0 0 60px rgba(79,172,254,0.5);
+  }
+  .logo-text {
+    font-size: 72px; font-weight: 900;
+    background: linear-gradient(135deg, var(--primary), var(--primary2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: -2px;
+  }
+  .logo-subtitle {
+    font-size: 28px; color: rgba(255,255,255,0.6);
+    margin-top: 10px; letter-spacing: 8px; text-transform: uppercase;
+  }
+  .logo-url {
+    font-size: 24px; color: rgba(255,255,255,0.4);
+    margin-top: 15px; letter-spacing: 4px;
+  }
+
+  /* ========== QUESTION ========== */
+  #question { background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%); }
+  .vrai-faux-badge {
+    background: linear-gradient(135deg, #f093fb, var(--secondary));
+    padding: 20px 60px; border-radius: 50px;
+    font-size: 52px; font-weight: 900; letter-spacing: 6px;
+    margin-bottom: 40px; opacity: 0;
+    box-shadow: 0 10px 40px rgba(245,87,108,0.4);
+  }
+  .question-media {
+    width: 500px; height: 350px; border-radius: 30px;
+    object-fit: cover; margin-bottom: 40px; opacity: 0;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    border: 4px solid rgba(255,255,255,0.15);
+  }
+  .question-text {
+    font-size: 42px; font-weight: 700; text-align: center;
+    padding: 0 60px; line-height: 1.4; opacity: 0; max-width: 950px;
+  }
+  .question-icon {
+    font-size: 120px; margin-bottom: 30px; opacity: 0;
+  }
+
+  /* ========== COUNTDOWN (inside question screen) ========== */
+  .countdown-overlay {
+    position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 15px;
+    opacity: 0; transition: opacity 0.5s ease;
+  }
+  .countdown-overlay.visible { opacity: 1; }
+  .countdown-ring {
+    position: relative; width: 140px; height: 140px;
+  }
+  .countdown-ring svg {
+    width: 140px; height: 140px; transform: rotate(-90deg);
+  }
+  .countdown-ring .ring-bg {
+    fill: none; stroke: rgba(255,255,255,0.1); stroke-width: 6;
+  }
+  .countdown-ring .ring-progress {
+    fill: none; stroke: url(#countdownGradient); stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 408; stroke-dashoffset: 0;
+    transition: stroke-dashoffset 1s linear;
+  }
+  .countdown-value {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    font-size: 64px; font-weight: 900;
+    background: linear-gradient(135deg, #f093fb, var(--secondary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    transition: transform 0.3s ease;
+  }
+  .countdown-value.pop {
+    animation: countdownPop 0.4s ease;
+  }
+  @keyframes countdownPop {
+    0% { transform: translate(-50%, -50%) scale(1.8); opacity: 0.5; }
+    50% { transform: translate(-50%, -50%) scale(0.9); opacity: 1; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  }
+  .countdown-label {
+    font-size: 20px; color: rgba(255,255,255,0.5);
+    text-transform: uppercase; letter-spacing: 6px; font-weight: 700;
+  }
+  .countdown-dots {
+    display: flex; gap: 10px; margin-top: 5px;
+  }
+  .countdown-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: rgba(255,255,255,0.15); transition: all 0.3s ease;
+  }
+  .countdown-dot.active {
+    background: linear-gradient(135deg, #f093fb, var(--secondary));
+    box-shadow: 0 0 12px rgba(245,87,108,0.6);
+    transform: scale(1.3);
+  }
+  .countdown-dot.done {
+    background: rgba(255,255,255,0.05);
+  }
+
+  /* ========== RÉPONSE ========== */
+  #answer.answer-faux { background: linear-gradient(135deg, #1a0a0a 0%, #3a1010 100%); }
+  #answer.answer-vrai { background: linear-gradient(135deg, #0a1a0a 0%, #103a10 100%); }
+  .answer-icon { font-size: 200px; opacity: 0; }
+  .answer-text { font-size: 120px; font-weight: 900; margin-top: 30px; opacity: 0; }
+  .answer-text.faux { color: #ff4444; text-shadow: 0 0 40px rgba(255,68,68,0.6); }
+  .answer-text.vrai { color: #44ff44; text-shadow: 0 0 40px rgba(68,255,68,0.6); }
+
+  /* ========== EXPLICATION ========== */
+  #explanation {
+    background: linear-gradient(135deg, #0a1628 0%, #1a2a4e 100%);
+    justify-content: flex-start; padding-top: 80px;
+  }
+  .explanation-title {
+    font-size: 42px; font-weight: 900; text-align: center;
+    margin-bottom: 30px; padding: 0 40px; opacity: 0;
+    background: linear-gradient(135deg, var(--primary), var(--primary2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .explanation-media {
+    width: 350px; height: 250px; border-radius: 25px;
+    object-fit: cover; margin-bottom: 30px; opacity: 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    border: 3px solid rgba(255,255,255,0.1);
+  }
+  .main-icon {
+    width: 200px; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 130px; margin-bottom: 30px; opacity: 0;
+  }
+  .explanation-points { width: 100%; padding: 0 60px; }
+  .point {
+    display: flex; align-items: center; gap: 20px;
+    margin-bottom: 30px; opacity: 0;
+    font-size: 32px; line-height: 1.3; font-weight: 600;
+  }
+  .point-icon {
+    flex-shrink: 0; width: 56px; height: 56px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .point-icon svg { width: 28px; height: 28px; }
+  .question-icon svg { width: 120px; height: 120px; }
+  .answer-icon svg { width: 200px; height: 200px; }
+  .main-icon svg { width: 130px; height: 130px; }
+  .logo-icon svg { width: 80px; height: 80px; }
+  .social-icon svg { width: 28px; height: 28px; }
+  .point:nth-child(1) .point-icon { background: linear-gradient(135deg, #ff6b6b, #ee5a24); }
+  .point:nth-child(2) .point-icon { background: linear-gradient(135deg, var(--warning1), var(--warning2)); }
+  .point:nth-child(3) .point-icon { background: linear-gradient(135deg, var(--danger1), var(--danger2)); }
+  .point:nth-child(4) .point-icon { background: linear-gradient(135deg, var(--success1), var(--success2)); }
+  .point:nth-child(5) .point-icon { background: linear-gradient(135deg, var(--primary), var(--primary2)); }
+  .info-badge {
+    padding: 15px 40px; border-radius: 20px;
+    font-size: 36px; font-weight: 900; margin-top: 20px; opacity: 0;
+    box-shadow: 0 10px 30px rgba(255,71,87,0.4);
+  }
+  .info-badge.danger { background: linear-gradient(135deg, var(--danger1), var(--danger2)); }
+  .info-badge.success { background: linear-gradient(135deg, var(--success1), var(--success2)); }
+  .info-badge.warning { background: linear-gradient(135deg, var(--warning1), var(--warning2)); }
+  .source-text {
+    font-size: 18px; color: rgba(255,255,255,0.35); margin-top: 25px;
+    font-style: italic; opacity: 0;
+  }
+
+  /* ========== OUTRO ========== */
+  #outro { background: linear-gradient(135deg, var(--bg) 0%, var(--bg2) 100%); }
+  .outro-logo-image { width: 180px; height: 180px; object-fit: contain; margin-bottom: 20px; }
+  .outro-logo {
+    font-size: 60px; font-weight: 900;
+    background: linear-gradient(135deg, var(--primary), var(--primary2));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 15px;
+  }
+  .outro-url { font-size: 28px; color: rgba(255,255,255,0.5); margin-bottom: 50px; }
+  .social-links { display: flex; flex-direction: column; gap: 22px; margin-bottom: 50px; }
+  .social-item {
+    display: flex; align-items: center; gap: 20px;
+    font-size: 34px; font-weight: 600; opacity: 0;
+  }
+  .social-icon {
+    width: 56px; height: 56px; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; font-size: 28px;
+  }
+  .tiktok { background: #000; border: 2px solid #fff; }
+  .instagram { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); }
+  .youtube { background: #ff0000; }
+  .facebook { background: #1877f2; }
+  .subscribe-btn {
+    background: linear-gradient(135deg, #f093fb, var(--secondary));
+    padding: 22px 55px; border-radius: 50px;
+    font-size: 36px; font-weight: 900; opacity: 0;
+    box-shadow: 0 10px 40px rgba(245,87,108,0.4);
+  }
+  .cta-text {
+    font-size: 26px; color: rgba(255,255,255,0.5); margin-top: 25px; opacity: 0;
+  }
+
+  /* ========== ANIMATIONS ========== */
+  @keyframes fadeInOut { 0%{opacity:0} 10%{opacity:1} 85%{opacity:1} 100%{opacity:0} }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+  @keyframes fadeOut { from{opacity:1} to{opacity:0} }
+  @keyframes logoPulse { 0%{transform:scale(0);opacity:0} 50%{transform:scale(1.2)} 70%{transform:scale(0.9)} 100%{transform:scale(1);opacity:1} }
+  @keyframes logoAnim { 0%{transform:scale(0.5);opacity:0} 40%{transform:scale(1.05);opacity:1} 60%{transform:scale(0.98)} 100%{transform:scale(1);opacity:1} }
+  @keyframes countPop { 0%{transform:scale(3);opacity:0} 30%{transform:scale(1);opacity:1} 80%{opacity:1} 100%{opacity:0;transform:scale(0.8)} }
+  @keyframes shakeIn { 0%{transform:scale(3) rotate(-5deg);opacity:0} 30%{transform:scale(1.1) rotate(3deg);opacity:1} 50%{transform:scale(0.95) rotate(-2deg)} 70%{transform:scale(1.02) rotate(1deg)} 100%{transform:scale(1) rotate(0);opacity:1} }
+  @keyframes bounceIn { 0%{transform:scale(0);opacity:0} 60%{transform:scale(1.15);opacity:1} 80%{transform:scale(0.95)} 100%{transform:scale(1);opacity:1} }
+  @keyframes slideUp { from{transform:translateY(80px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes slideDown { from{transform:translateY(-60px);opacity:0} to{transform:translateY(0);opacity:1} }
+  @keyframes slideRight { from{transform:translateX(-100px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes slideLeft { from{transform:translateX(100px);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
+
+  /* Particules */
+  .particle { position:absolute; width:6px; height:6px; background:rgba(79,172,254,0.3); border-radius:50%; animation:float 8s ease-in-out infinite; z-index:50; }
+  .particle:nth-child(1){top:10%;left:15%} .particle:nth-child(2){top:25%;left:80%;width:8px;height:8px;animation-delay:1s}
+  .particle:nth-child(3){top:60%;left:20%;animation-delay:2s} .particle:nth-child(4){top:75%;left:70%;width:10px;height:10px;animation-delay:3s}
+  .particle:nth-child(5){top:40%;left:90%;animation-delay:4s}
+  @keyframes float { 0%,100%{transform:translateY(0) rotate(0);opacity:.3} 50%{transform:translateY(-30px) rotate(180deg);opacity:.7} }
+
+  /* Barre de progression */
+  .progress-bar {
+    position:absolute; bottom:0; left:0; height:8px; z-index:100;
+    background:linear-gradient(90deg, var(--primary), var(--primary2), #f093fb, var(--secondary));
+  }
+</style>
+</head>
+<body>
+
+  <div class="particle"></div><div class="particle"></div><div class="particle"></div>
+  <div class="particle"></div><div class="particle"></div>
+  <div class="progress-bar" id="progressBar"></div>
+
+  <!-- WATERMARK -->
+  <div class="watermark" id="watermark"></div>
+
+  <!-- DIFFICULTY -->
+  <div class="difficulty-badge" id="difficultyBadge" style="display:none"></div>
+
+  <!-- AUDIO ELEMENTS -->
+  <audio id="audioIntro" preload="auto"></audio>
+  <audio id="audioSuspense" preload="auto"></audio>
+  <audio id="audioAnswer" preload="auto"></audio>
+  <audio id="audioQuestion" preload="auto"></audio>
+  <audio id="audioExplication" preload="auto"></audio>
+  <audio id="audioOutro" preload="auto"></audio>
+  <audio id="audioBgMusic" preload="auto" loop></audio>
+
+  <!-- INTRO -->
+  <div id="intro" class="sequence">
+    <div class="logo-container">
+      <img class="logo-image" id="logoImage" src="" alt="Logo" style="display:none">
+      <div class="logo-icon" id="logoEmoji" style="display:none">🚗</div>
+      <div class="logo-text" id="siteName">TestPermis.fr</div>
+      <div class="logo-subtitle" id="subtitle"></div>
+      <div class="logo-url" id="siteUrl"></div>
+    </div>
+  </div>
+
+  <!-- QUESTION + COUNTDOWN -->
+  <div id="question" class="sequence">
+    <div class="question-icon" id="questionEmoji"></div>
+    <div class="vrai-faux-badge">VRAI ou FAUX ?</div>
+    <img class="question-media" id="questionMedia" src="" alt="" style="display:none">
+    <video class="question-media" id="questionVideo" muted style="display:none"></video>
+    <div class="question-text" id="questionText"></div>
+    <!-- Countdown intégré — apparaît après la fin de l'audio question -->
+    <div class="countdown-overlay" id="countdownOverlay">
+      <div class="countdown-ring">
+        <svg viewBox="0 0 140 140">
+          <defs>
+            <linearGradient id="countdownGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f093fb"/>
+              <stop offset="100%" stop-color="var(--secondary, #f5576c)"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="70" cy="70" r="65"/>
+          <circle class="ring-progress" id="ringProgress" cx="70" cy="70" r="65"/>
+        </svg>
+        <div class="countdown-value" id="countdownValue">3</div>
+      </div>
+      <div class="countdown-label">Répondez !</div>
+      <div class="countdown-dots">
+        <div class="countdown-dot" id="dot3"></div>
+        <div class="countdown-dot" id="dot2"></div>
+        <div class="countdown-dot" id="dot1"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RÉPONSE -->
+  <div id="answer" class="sequence">
+    <div class="answer-icon" id="answerEmoji"></div>
+    <div class="answer-text" id="answerText"></div>
+  </div>
+
+  <!-- EXPLICATION -->
+  <div id="explanation" class="sequence">
+    <div class="explanation-title" id="explanationTitle"></div>
+    <img class="explanation-media" id="explanationMedia" src="" alt="" style="display:none">
+    <div class="main-icon" id="mainIcon"></div>
+    <div class="explanation-points" id="explanationPoints"></div>
+    <div class="info-badge" id="infoBadge"></div>
+    <div class="source-text" id="sourceText"></div>
+  </div>
+
+  <!-- OUTRO -->
+  <div id="outro" class="sequence">
+    <img class="outro-logo-image" id="outroLogoImage" src="" alt="Logo" style="display:none">
+    <div class="outro-logo" id="outroSiteName">TestPermis.fr</div>
+    <div class="outro-url" id="outroUrl"></div>
+    <div class="social-links" id="socialLinks"></div>
+    <div class="subscribe-btn"><svg viewBox="0 0 24 24" fill="white" width="36" height="36" style="vertical-align:middle;margin-right:10px"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6V10c0-3.07-1.63-5.64-4.5-6.32V3a1.5 1.5 0 00-3 0v.68C7.64 4.36 6 6.92 6 10v6l-2 2v1h16v-1l-2-2z"/></svg>Abonnez-vous !</div>
+    <div class="cta-text" id="ctaText"></div>
+  </div>
+
+  <script>
+    // ══════════════════════════════════════════════════
+    //  MOTEUR DE RENDU DYNAMIQUE v2 — TestPermis.fr
+    //  - Format responsive (ratio-based)
+    //  - Countdown intégré dans l'écran question avec tick-tack
+    //  - Timing basé sur les durées audio
+    // ══════════════════════════════════════════════════
+
+    // ─── Presets de résolution par plateforme ───
+    const FORMAT_PRESETS = {
+      'tiktok':    { ratio: '9:16', width: 1080, height: 1920 },
+      'reels':     { ratio: '9:16', width: 1080, height: 1920 },
+      'shorts':    { ratio: '9:16', width: 1080, height: 1920 },
+      'youtube':   { ratio: '16:9', width: 1920, height: 1080 },
+      'facebook':  { ratio: '1:1',  width: 1080, height: 1080 },
+      'linkedin':  { ratio: '1:1',  width: 1080, height: 1080 },
+      'story':     { ratio: '9:16', width: 1080, height: 1920 },
+      'twitter':   { ratio: '16:9', width: 1280, height: 720 },
+    };
+
+    function getResolution(format) {
+      // Si une plateforme est précisée, utiliser le preset
+      if (format.platform && FORMAT_PRESETS[format.platform]) {
+        return FORMAT_PRESETS[format.platform];
+      }
+      // Sinon calculer à partir du ratio
+      const [rw, rh] = (format.ratio || '9:16').split(':').map(Number);
+      if (rw > rh) return { width: 1920, height: Math.round(1920 * rh / rw) };
+      if (rw < rh) return { width: 1080, height: Math.round(1080 * rh / rw) };
+      return { width: 1080, height: 1080 };
+    }
+
+    function loadData() {
+      if (window.__VIDEO_DATA) return window.__VIDEO_DATA;
+      const params = new URLSearchParams(window.location.search);
+      const d = params.get('data');
+      if (d) try { return JSON.parse(decodeURIComponent(d)); } catch(e) {}
+
+      return {
+        settings: {
+          site: { name: "TestPermis.fr", url: "https://testpermis.fr", logo: "", logoAnimation: "zoom-bounce", watermark: "", callToAction: "Testez vos connaissances !" },
+          sounds: { intro: "", suspense: "", correct: "", wrong: "", outro: "", backgroundMusic: "", backgroundMusicVolume: 0.15 },
+          theme: { primaryColor: "#4facfe", secondaryColor: "#f5576c", backgroundColor: "#0a0a2e", accentGradient: ["#4facfe","#00f2fe"], fontFamily: "Montserrat" },
+          socials: { tiktok: "@testpermis.fr", instagram: "@testpermis.fr", youtube: "TestPermis.fr", facebook: "", website: "testpermis.fr" },
+          format: { ratio: "9:16", platform: "tiktok", fps: 30 }
+        },
+        video: {
+          id: 1, sujet: "Panneau STOP", categorie: "Signalisation", emoji: "🛑", difficulty: "facile",
+          question: { texte: "« Au panneau STOP, je peux ralentir sans m'arrêter. »", media: "", mediaType: "image", audio: "", audioDuration: 5 },
+          reponse: "FAUX",
+          explication: { titre: "L'arrêt est OBLIGATOIRE", media: "", mediaType: "image", audio: "", audioDuration: 13,
+            points: [
+              { icon: "🛑", texte: "L'arrêt complet est obligatoire" },
+              { icon: "📍", texte: "Arrêtez-vous à la ligne blanche" },
+              { icon: "💰", texte: "-4 points + 135€ d'amende" },
+              { icon: "✅", texte: "Cédez le passage après l'arrêt" }
+            ],
+            badge: { texte: "⚠️ -4 pts + 135€", type: "danger" }
+          },
+          timing: { introDuration: 3, questionDuration: 10, countdownDuration: 3, answerDuration: 4, explanationDuration: 17, outroDuration: 4 },
+          source: "", tags: [], description: ""
+        }
+      };
+    }
+
+    // ─── Appliquer le format responsive ───
+    function applyFormat(format) {
+      const res = getResolution(format);
+      const r = document.documentElement.style;
+      r.setProperty('--vw', res.width + 'px');
+      r.setProperty('--vh', res.height + 'px');
+      document.body.style.width = res.width + 'px';
+      document.body.style.height = res.height + 'px';
+
+      // Adapter les tailles de police selon le format
+      const isLandscape = res.width > res.height;
+      const isSquare = res.width === res.height;
+      const scale = isLandscape ? 0.7 : isSquare ? 0.85 : 1;
+      document.body.style.fontSize = (scale * 100) + '%';
+
+      // Stocker la résolution pour Puppeteer
+      window.__RESOLUTION = res;
+
+      console.log(`📐 Format: ${format.ratio || format.platform} → ${res.width}x${res.height}`);
+    }
+
+    function applyTheme(theme) {
+      const r = document.documentElement.style;
+      if (theme.primaryColor) r.setProperty('--primary', theme.primaryColor);
+      if (theme.secondaryColor) r.setProperty('--secondary', theme.secondaryColor);
+      if (theme.backgroundColor) { r.setProperty('--bg', theme.backgroundColor); document.body.style.background = theme.backgroundColor; }
+      if (theme.accentGradient) { r.setProperty('--primary', theme.accentGradient[0]); r.setProperty('--primary2', theme.accentGradient[1]); }
+      if (theme.fontFamily) { r.setProperty('--font', `'${theme.fontFamily}', sans-serif`); document.body.style.fontFamily = `'${theme.fontFamily}', sans-serif`; }
+    }
+
+    function setupSounds(sounds) {
+      if (sounds.intro) document.getElementById('audioIntro').src = sounds.intro;
+      if (sounds.suspense) document.getElementById('audioSuspense').src = sounds.suspense;
+      if (sounds.outro) document.getElementById('audioOutro').src = sounds.outro;
+      if (sounds.backgroundMusic) {
+        const bg = document.getElementById('audioBgMusic');
+        bg.src = sounds.backgroundMusic;
+        bg.volume = sounds.backgroundMusicVolume || 0.15;
+      }
+    }
+
+    function playAudio(id) {
+      const a = document.getElementById(id);
+      if (a && a.src && a.src !== window.location.href) a.play().catch(() => {});
+    }
+
+    // ─── Timing intelligent basé sur les durées audio ───
+    function calculateTiming(video) {
+      const t = video.timing;
+      const qAudio = video.question.audioDuration || 0;
+      const eAudio = video.explication.audioDuration || 0;
+
+      // questionDuration = max(temps configuré, audioDuration + countdown + 2s buffer)
+      const minQuestionTime = qAudio + t.countdownDuration + 2;
+      const questionDuration = Math.max(t.questionDuration, minQuestionTime);
+
+      // explanationDuration = max(temps configuré, audioDuration + 3s buffer)
+      const minExplanationTime = eAudio + 3;
+      const explanationDuration = Math.max(t.explanationDuration, minExplanationTime);
+
+      return {
+        introDuration: t.introDuration,
+        questionDuration,
+        countdownDuration: t.countdownDuration,
+        answerDuration: t.answerDuration,
+        explanationDuration,
+        outroDuration: t.outroDuration
+      };
+    }
+
+    // ─── Appliquer toutes les animations ───
+    function applyAnimations(timing, video) {
+      const t = timing;
+      const tIntro = 0;
+      const tQuestion = t.introDuration;
+      // Le countdown commence après l'audio de la question
+      const tCountdownStart = tQuestion + (video.question.audioDuration || 2) + 1;
+      const tAnswer = tQuestion + t.questionDuration;
+      const tExplanation = tAnswer + t.answerDuration;
+      const tOutro = tExplanation + t.explanationDuration;
+      const totalDuration = tOutro + t.outroDuration;
+
+      // Progress bar
+      const style = document.createElement('style');
+      style.textContent = `@keyframes progress { from{width:0} to{width:100%} }`;
+      document.head.appendChild(style);
+      document.getElementById('progressBar').style.animation = `progress ${totalDuration}s linear forwards`;
+
+      // ── Intro ──
+      const intro = document.getElementById('intro');
+      intro.style.animation = `fadeInOut ${t.introDuration}s ease forwards`;
+      intro.style.animationDelay = `${tIntro}s`;
+      intro.querySelector('.logo-container').style.animation = `logoAnim ${t.introDuration - 0.5}s ease forwards`;
+
+      // ── Question (inclut le countdown) ──
+      const question = document.getElementById('question');
+      question.style.animation = `fadeInOut ${t.questionDuration}s ease forwards`;
+      question.style.animationDelay = `${tQuestion}s`;
+
+      const qBadge = question.querySelector('.vrai-faux-badge');
+      qBadge.style.animation = `bounceIn 0.8s ease forwards`;
+      qBadge.style.animationDelay = `${tQuestion + 0.5}s`;
+
+      const qIcon = question.querySelector('.question-icon');
+      qIcon.style.animation = `bounceIn 0.6s ease forwards`;
+      qIcon.style.animationDelay = `${tQuestion + 0.2}s`;
+
+      const qMedia = document.getElementById('questionMedia');
+      if (qMedia.style.display !== 'none') {
+        qMedia.style.animation = `bounceIn 0.8s ease forwards`;
+        qMedia.style.animationDelay = `${tQuestion + 0.8}s`;
+      }
+
+      const qText = question.querySelector('.question-text');
+      qText.style.animation = `slideUp 1s ease forwards`;
+      qText.style.animationDelay = `${tQuestion + 1.5}s`;
+
+      // Countdown — apparaît APRÈS la fin de l'audio question
+      const cdOverlay = document.getElementById('countdownOverlay');
+      const cdValue = document.getElementById('countdownValue');
+      const ringProgress = document.getElementById('ringProgress');
+      const circumference = 2 * Math.PI * 65; // r=65
+      ringProgress.style.strokeDasharray = circumference;
+      ringProgress.style.strokeDashoffset = '0';
+
+      const dot3 = document.getElementById('dot3');
+      const dot2 = document.getElementById('dot2');
+      const dot1 = document.getElementById('dot1');
+
+      // Afficher le countdown après l'audio question
+      setTimeout(() => {
+        cdOverlay.classList.add('visible');
+        cdValue.textContent = '3';
+        cdValue.classList.add('pop');
+        dot3.classList.add('active');
+        ringProgress.style.strokeDashoffset = '0';
+        playAudio('audioSuspense');
+        setTimeout(() => cdValue.classList.remove('pop'), 400);
+      }, tCountdownStart * 1000);
+
+      setTimeout(() => {
+        cdValue.textContent = '2';
+        cdValue.classList.add('pop');
+        dot3.classList.remove('active'); dot3.classList.add('done');
+        dot2.classList.add('active');
+        ringProgress.style.strokeDashoffset = `${circumference / 3}`;
+        playAudio('audioSuspense');
+        setTimeout(() => cdValue.classList.remove('pop'), 400);
+      }, (tCountdownStart + 1) * 1000);
+
+      setTimeout(() => {
+        cdValue.textContent = '1';
+        cdValue.classList.add('pop');
+        dot2.classList.remove('active'); dot2.classList.add('done');
+        dot1.classList.add('active');
+        ringProgress.style.strokeDashoffset = `${(circumference / 3) * 2}`;
+        playAudio('audioSuspense');
+        setTimeout(() => cdValue.classList.remove('pop'), 400);
+      }, (tCountdownStart + 2) * 1000);
+
+      // ── Réponse ──
+      const answer = document.getElementById('answer');
+      answer.style.animation = `fadeInOut ${t.answerDuration}s ease forwards`;
+      answer.style.animationDelay = `${tAnswer}s`;
+      document.getElementById('answerEmoji').style.animation = `shakeIn 0.8s ease forwards`;
+      document.getElementById('answerEmoji').style.animationDelay = `${tAnswer + 0.3}s`;
+      document.getElementById('answerText').style.animation = `shakeIn 0.6s ease forwards`;
+      document.getElementById('answerText').style.animationDelay = `${tAnswer + 0.8}s`;
+
+      // ── Explication ──
+      const explanation = document.getElementById('explanation');
+      explanation.style.animation = `fadeIn 1s ease forwards, fadeOut 1s ease forwards`;
+      explanation.style.animationDelay = `${tExplanation}s, ${tOutro}s`;
+
+      document.getElementById('explanationTitle').style.animation = `slideDown 0.8s ease forwards`;
+      document.getElementById('explanationTitle').style.animationDelay = `${tExplanation + 0.5}s`;
+
+      const expMedia = document.getElementById('explanationMedia');
+      if (expMedia.style.display !== 'none') {
+        expMedia.style.animation = `bounceIn 0.8s ease forwards`;
+        expMedia.style.animationDelay = `${tExplanation + 1}s`;
+      }
+      const mainIcon = document.getElementById('mainIcon');
+      if (mainIcon.style.display !== 'none') {
+        mainIcon.style.animation = `bounceIn 0.8s ease forwards`;
+        mainIcon.style.animationDelay = `${tExplanation + 1}s`;
+      }
+
+      // Points — espacement basé sur la durée audio explication
+      const points = document.querySelectorAll('#explanationPoints .point');
+      const eAudio = video.explication.audioDuration || (t.explanationDuration - 4);
+      const pointStartDelay = tExplanation + 2;
+      const pointInterval = (eAudio - 1) / Math.max(points.length, 1);
+      points.forEach((p, i) => {
+        p.style.animation = `slideRight 0.8s ease forwards`;
+        p.style.animationDelay = `${pointStartDelay + (i * pointInterval)}s`;
+      });
+
+      const badge = document.getElementById('infoBadge');
+      badge.style.animation = `bounceIn 0.6s ease forwards`;
+      badge.style.animationDelay = `${tExplanation + t.explanationDuration - 4}s`;
+
+      const source = document.getElementById('sourceText');
+      source.style.animation = `fadeIn 0.5s ease forwards`;
+      source.style.animationDelay = `${tExplanation + t.explanationDuration - 3}s`;
+
+      // ── Outro ──
+      const outro = document.getElementById('outro');
+      outro.style.animation = `fadeIn 1s ease forwards`;
+      outro.style.animationDelay = `${tOutro}s`;
+
+      const outroLogo = outro.querySelector('.outro-logo');
+      if (outroLogo) { outroLogo.style.animation = `logoPulse 1s ease forwards`; outroLogo.style.animationDelay = `${tOutro + 0.5}s`; outroLogo.style.opacity = '0'; }
+      const outroLogoImg = document.getElementById('outroLogoImage');
+      if (outroLogoImg.style.display !== 'none') { outroLogoImg.style.animation = `logoPulse 1s ease forwards`; outroLogoImg.style.animationDelay = `${tOutro + 0.5}s`; outroLogoImg.style.opacity = '0'; }
+
+      const socialItems = document.querySelectorAll('.social-item');
+      socialItems.forEach((s, i) => {
+        s.style.animation = `slideRight 0.6s ease forwards`;
+        s.style.animationDelay = `${tOutro + 1 + (i * 0.3)}s`;
+      });
+      const subBtn = outro.querySelector('.subscribe-btn');
+      subBtn.style.animation = `bounceIn 0.8s ease forwards`;
+      subBtn.style.animationDelay = `${tOutro + 2}s`;
+      const cta = document.getElementById('ctaText');
+      cta.style.animation = `fadeIn 0.5s ease forwards`;
+      cta.style.animationDelay = `${tOutro + 2.5}s`;
+
+      // ─── Sons synchronisés ───
+      setTimeout(() => { playAudio('audioIntro'); playAudio('audioBgMusic'); }, tIntro * 1000);
+      // Audio question joué après affichage du texte
+      setTimeout(() => playAudio('audioQuestion'), (tQuestion + 2) * 1000);
+      // Audio réponse (correct/wrong)
+      setTimeout(() => playAudio('audioAnswer'), (tAnswer + 0.3) * 1000);
+      // Audio explication joué au début de l'explication
+      setTimeout(() => playAudio('audioExplication'), (tExplanation + 1) * 1000);
+      setTimeout(() => playAudio('audioOutro'), tOutro * 1000);
+
+      // Stocker la durée totale pour Puppeteer
+      window.__TOTAL_DURATION = totalDuration;
+      console.log(`⏱️ Durée totale: ${totalDuration}s | Question: ${t.questionDuration}s (audio:${video.question.audioDuration}s + countdown:${t.countdownDuration}s) | Explication: ${t.explanationDuration}s (audio:${video.explication.audioDuration}s)`);
+    }
+
+    // ─── SVG Icons ───
+    const SVG_ICONS = {
+      // Social
+      tiktok: `<svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 00-.79-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.69a8.2 8.2 0 004.76 1.52V6.76a4.79 4.79 0 01-1-.07z"/></svg>`,
+      instagram: `<svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M12 2.16c3.2 0 3.58.01 4.85.07 1.17.05 1.97.24 2.44.41.61.24 1.05.52 1.51.98.46.46.74.9.98 1.51.17.47.36 1.27.41 2.44.06 1.27.07 1.65.07 4.85s-.01 3.58-.07 4.85c-.05 1.17-.24 1.97-.41 2.44a4.08 4.08 0 01-.98 1.51c-.46.46-.9.74-1.51.98-.47.17-1.27.36-2.44.41-1.27.06-1.65.07-4.85.07s-3.58-.01-4.85-.07c-1.17-.05-1.97-.24-2.44-.41a4.08 4.08 0 01-1.51-.98 4.08 4.08 0 01-.98-1.51c-.17-.47-.36-1.27-.41-2.44C2.17 15.58 2.16 15.2 2.16 12s.01-3.58.07-4.85c.05-1.17.24-1.97.41-2.44.24-.61.52-1.05.98-1.51a4.08 4.08 0 011.51-.98c.47-.17 1.27-.36 2.44-.41C8.42 2.17 8.8 2.16 12 2.16zM12 0C8.74 0 8.33.01 7.05.07 5.78.13 4.9.33 4.14.63c-.78.3-1.44.71-2.1 1.37A5.88 5.88 0 00.63 4.14C.33 4.9.13 5.78.07 7.05.01 8.33 0 8.74 0 12s.01 3.67.07 4.95c.06 1.27.26 2.15.56 2.91.3.78.71 1.44 1.37 2.1a5.88 5.88 0 002.14 1.37c.76.3 1.64.5 2.91.56C8.33 23.99 8.74 24 12 24s3.67-.01 4.95-.07c1.27-.06 2.15-.26 2.91-.56a5.88 5.88 0 002.14-1.37 5.88 5.88 0 001.37-2.1c.3-.76.5-1.64.56-2.91.06-1.28.07-1.69.07-4.95s-.01-3.67-.07-4.95c-.06-1.27-.26-2.15-.56-2.91a5.88 5.88 0 00-1.37-2.14A5.88 5.88 0 0019.86.63C19.1.33 18.22.13 16.95.07 15.67.01 15.26 0 12 0zm0 5.84a6.16 6.16 0 100 12.32 6.16 6.16 0 000-12.32zM12 16a4 4 0 110-8 4 4 0 010 8zm7.85-10.4a1.44 1.44 0 11-2.88 0 1.44 1.44 0 012.88 0z"/></svg>`,
+      youtube: `<svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.55A3.02 3.02 0 00.5 6.19 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.88.55 9.38.55 9.38.55s7.5 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.81zM9.55 15.57V8.43L15.82 12l-6.27 3.57z"/></svg>`,
+      facebook: `<svg viewBox="0 0 24 24" fill="white" width="28" height="28"><path d="M24 12.07C24 5.41 18.63 0 12 0S0 5.4 0 12.07c0 6.03 4.39 11.02 10.13 11.93v-8.44H7.08v-3.49h3.04V9.41c0-3.02 1.79-4.7 4.53-4.7 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.89v2.26h3.33l-.53 3.49h-2.8v8.44C19.61 23.09 24 18.1 24 12.07z"/></svg>`,
+      // Answer
+      check: `<svg viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="11" fill="none" stroke="#44ff44" stroke-width="2"/><path d="M7 12.5l3 3 7-7" fill="none" stroke="#44ff44" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      cross: `<svg viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="11" fill="none" stroke="#ff4444" stroke-width="2"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#ff4444" stroke-width="2.5" stroke-linecap="round"/></svg>`,
+      // Bell
+      bell: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 002 2zm6-6V10c0-3.07-1.63-5.64-4.5-6.32V3a1.5 1.5 0 00-3 0v.68C7.64 4.36 6 6.92 6 10v6l-2 2v1h16v-1l-2-2z"/></svg>`,
+      // Car (logo fallback)
+      car: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.85 7h10.29l1.08 3.11H5.77L6.85 7zM19 17H5v-5h14v5z"/><circle cx="7.5" cy="14.5" r="1.5" fill="white"/><circle cx="16.5" cy="14.5" r="1.5" fill="white"/></svg>`,
+      // Common point icons
+      stop: `<svg viewBox="0 0 24 24" width="1em" height="1em"><polygon points="7.86,2 16.14,2 22,7.86 22,16.14 16.14,22 7.86,22 2,16.14 2,7.86" fill="#ff4444"/><text x="12" y="16" text-anchor="middle" fill="white" font-size="10" font-weight="bold">STOP</text></svg>`,
+      pin: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z"/></svg>`,
+      money: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>`,
+      valid: `<svg viewBox="0 0 24 24" width="1em" height="1em"><circle cx="12" cy="12" r="10" fill="none" stroke="#2ed573" stroke-width="2"/><path d="M7 12.5l3.5 3.5 6.5-7" fill="none" stroke="#2ed573" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+      warning: `<svg viewBox="0 0 24 24" fill="#ffa502" width="1em" height="1em"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg>`,
+      info: `<svg viewBox="0 0 24 24" fill="#4facfe" width="1em" height="1em"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>`,
+      shield: `<svg viewBox="0 0 24 24" fill="#4facfe" width="1em" height="1em"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>`,
+      eye: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg>`,
+      helmet: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M12 2C6.48 2 2 6.48 2 12c0 2.76 1.12 5.26 2.93 7.07l1.41-1.41A7.95 7.95 0 014 12c0-4.42 3.58-8 8-8s8 3.58 8 8a7.95 7.95 0 01-2.34 5.66l1.41 1.41A9.97 9.97 0 0022 12c0-5.52-4.48-10-10-10zm0 4a6 6 0 00-6 6h2a4 4 0 018 0h2a6 6 0 00-6-6z"/></svg>`,
+      speed: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M20.38 8.57l-1.23 1.85a8 8 0 01-.22 7.58H5.07A8 8 0 0115.58 6.85l1.85-1.23A10 10 0 003.35 19a2 2 0 001.72 1h13.85a2 2 0 001.74-1 10 10 0 00-.27-10.44z"/><path d="M10.59 15.41a2 2 0 002.83 0l5.66-8.49-8.49 5.66a2 2 0 000 2.83z"/></svg>`,
+      road: `<svg viewBox="0 0 24 24" fill="white" width="1em" height="1em"><path d="M11 4h2v3h-2V4zm0 4h2v3h-2V8zm0 4h2v3h-2v-3zm0 4h2v5h-2v-5zM4 2l3 18h2L6.5 2H4zm14 0h-2.5L13 20h2l3-18z"/></svg>`,
+    };
+
+    // Emoji → SVG mapping
+    const EMOJI_TO_SVG = {
+      '🛑': 'stop', '📍': 'pin', '💰': 'money', '✅': 'valid', '⚠️': 'warning',
+      'ℹ️': 'info', '🛡️': 'shield', '👁️': 'eye', '🪖': 'helmet', '⏱️': 'speed',
+      '🏍️': 'speed', '🚗': 'car', '🔔': 'bell', '🎵': 'tiktok', '📸': 'instagram',
+      '▶️': 'youtube', '👤': 'facebook', '❌': 'cross', '🚧': 'warning',
+      '📏': 'road', '🛣️': 'road', '🔒': 'shield', '💡': 'info', '🔺': 'warning',
+      '🔴': 'stop', '🟢': 'valid', '🏁': 'road',
+    };
+
+    function emojiToSvg(emoji, fallbackSize) {
+      const key = EMOJI_TO_SVG[emoji];
+      if (key && SVG_ICONS[key]) return SVG_ICONS[key];
+      // Fallback: return emoji as text
+      return emoji;
+    }
+
+    // ─── Remplir le contenu ───
+    function renderVideo(data) {
+      const settings = data.settings;
+      const video = data.video;
+      const isVrai = video.reponse.toUpperCase() === "VRAI";
+
+      // ── Format responsive ──
+      applyFormat(settings.format);
+
+      // ── Thème ──
+      applyTheme(settings.theme);
+
+      // ── Sons ──
+      setupSounds(settings.sounds);
+      if (settings.sounds.correct && isVrai) document.getElementById('audioAnswer').src = settings.sounds.correct;
+      if (settings.sounds.wrong && !isVrai) document.getElementById('audioAnswer').src = settings.sounds.wrong;
+      if (video.question.audio) document.getElementById('audioQuestion').src = video.question.audio;
+      if (video.explication.audio) document.getElementById('audioExplication').src = video.explication.audio;
+
+      // ── Watermark ──
+      const wm = document.getElementById('watermark');
+      if (settings.site.watermark) wm.innerHTML = `<img src="${settings.site.watermark}" alt="watermark">`;
+      else wm.textContent = settings.site.name;
+
+      // ── Difficulty ──
+      if (video.difficulty) {
+        const db = document.getElementById('difficultyBadge');
+        db.style.display = 'block';
+        db.textContent = video.difficulty;
+        db.className = `difficulty-badge ${video.difficulty}`;
+      }
+
+      // ── Intro ──
+      if (settings.site.logo) {
+        document.getElementById('logoImage').src = settings.site.logo;
+        document.getElementById('logoImage').style.display = 'block';
+        document.getElementById('logoEmoji').style.display = 'none';
+      } else {
+        document.getElementById('logoEmoji').style.display = 'flex';
+        document.getElementById('logoEmoji').innerHTML = emojiToSvg(video.emoji || '🚗');
+      }
+      document.getElementById('siteName').textContent = settings.site.name;
+      document.getElementById('subtitle').textContent = video.categorie;
+      document.getElementById('siteUrl').textContent = settings.site.url.replace('https://', '');
+
+      // ── Question ──
+      document.getElementById('questionEmoji').innerHTML = emojiToSvg(video.emoji || '❓');
+      document.getElementById('questionText').textContent = video.question.texte;
+      if (video.question.media && video.question.mediaType === 'image') {
+        document.getElementById('questionMedia').src = video.question.media;
+        document.getElementById('questionMedia').style.display = 'block';
+      } else if (video.question.media && video.question.mediaType === 'video') {
+        const qv = document.getElementById('questionVideo');
+        qv.src = video.question.media; qv.style.display = 'block';
+      }
+
+      // ── Réponse ──
+      const answerDiv = document.getElementById('answer');
+      answerDiv.className = `sequence ${isVrai ? 'answer-vrai' : 'answer-faux'}`;
+      document.getElementById('answerEmoji').innerHTML = isVrai ? SVG_ICONS.check : SVG_ICONS.cross;
+      const answerText = document.getElementById('answerText');
+      answerText.textContent = `${video.reponse.toUpperCase()} !`;
+      answerText.className = `answer-text ${isVrai ? 'vrai' : 'faux'}`;
+
+      // ── Explication ──
+      document.getElementById('explanationTitle').textContent = video.explication.titre;
+      if (video.explication.media && video.explication.mediaType === 'image') {
+        document.getElementById('explanationMedia').src = video.explication.media;
+        document.getElementById('explanationMedia').style.display = 'block';
+        document.getElementById('mainIcon').style.display = 'none';
+      } else {
+        document.getElementById('mainIcon').innerHTML = emojiToSvg(video.emoji);
+      }
+
+      // Points dynamiques
+      const pointsContainer = document.getElementById('explanationPoints');
+      pointsContainer.innerHTML = '';
+      video.explication.points.forEach(p => {
+        const div = document.createElement('div');
+        div.className = 'point';
+        div.innerHTML = `<div class="point-icon">${emojiToSvg(p.icon)}</div><span>${p.texte}</span>`;
+        pointsContainer.appendChild(div);
+      });
+
+      const badge = document.getElementById('infoBadge');
+      badge.textContent = video.explication.badge.texte;
+      badge.className = `info-badge ${video.explication.badge.type}`;
+
+      if (video.source) document.getElementById('sourceText').textContent = `Source : ${video.source}`;
+
+      // ── Outro ──
+      if (settings.site.logo) {
+        document.getElementById('outroLogoImage').src = settings.site.logo;
+        document.getElementById('outroLogoImage').style.display = 'block';
+      }
+      document.getElementById('outroSiteName').textContent = settings.site.name;
+      document.getElementById('outroUrl').textContent = settings.site.url.replace('https://', '');
+
+      const socialContainer = document.getElementById('socialLinks');
+      socialContainer.innerHTML = '';
+      const socials = settings.socials;
+      if (socials.tiktok) socialContainer.innerHTML += `<div class="social-item"><div class="social-icon tiktok">${SVG_ICONS.tiktok}</div><span>${socials.tiktok}</span></div>`;
+      if (socials.instagram) socialContainer.innerHTML += `<div class="social-item"><div class="social-icon instagram">${SVG_ICONS.instagram}</div><span>${socials.instagram}</span></div>`;
+      if (socials.youtube) socialContainer.innerHTML += `<div class="social-item"><div class="social-icon youtube">${SVG_ICONS.youtube}</div><span>${socials.youtube}</span></div>`;
+      if (socials.facebook) socialContainer.innerHTML += `<div class="social-item"><div class="social-icon facebook">${SVG_ICONS.facebook}</div><span>${socials.facebook}</span></div>`;
+
+      if (settings.site.callToAction) document.getElementById('ctaText').textContent = settings.site.callToAction;
+
+      // ── Calculer timing intelligent + lancer animations ──
+      const smartTiming = calculateTiming(video);
+      applyAnimations(smartTiming, video);
+    }
+
+    // ─── Lancement ───
+    const rawData = loadData();
+    renderVideo(rawData);
+  </script>
+
+</body>
+</html>
