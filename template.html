@@ -23,9 +23,18 @@
   }
 
   body {
-    width: var(--vw); height: var(--vh); overflow: hidden;
-    font-family: var(--font); background: var(--bg); color: white;
+    width: 100vw; height: 100vh; overflow: hidden;
+    font-family: var(--font); background: #000; color: white;
     position: relative;
+  }
+
+  /* Conteneur vidéo à dimensions fixes — scalé via transform pour le responsive */
+  .video-stage {
+    width: var(--vw); height: var(--vh);
+    position: absolute; top: 0; left: 0;
+    transform-origin: top left;
+    overflow: hidden;
+    background: var(--bg);
   }
 
   /* ========== SÉQUENCES ========== */
@@ -291,6 +300,7 @@
 </style>
 </head>
 <body>
+<div id="videoStage" class="video-stage">
 
   <div class="particle"></div><div class="particle"></div><div class="particle"></div>
   <div class="particle"></div><div class="particle"></div>
@@ -379,9 +389,28 @@
     <div class="cta-text" id="ctaText"></div>
   </div>
 
+  <!-- OVERLAY "TAP TO PLAY" — requis par la politique autoplay de Chrome -->
+  <div id="startOverlay" style="
+    position:absolute; top:0; left:0; width:100%; height:100%;
+    background:rgba(10,10,46,0.93); z-index:9999;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    cursor:pointer; font-family:var(--font);">
+    <div style="
+      width:180px; height:180px;
+      background:linear-gradient(135deg,#4facfe,#00f2fe);
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      box-shadow:0 0 80px rgba(79,172,254,0.5); margin-bottom:50px;">
+      <svg viewBox="0 0 24 24" fill="white" width="80" height="80"><path d="M8 5v14l11-7z"/></svg>
+    </div>
+    <div style="font-size:52px; font-weight:900; color:white; letter-spacing:2px;">Appuyer pour lancer</div>
+    <div style="font-size:28px; color:rgba(255,255,255,0.45); margin-top:20px;">TestPermis.fr</div>
+  </div>
+
+</div><!-- /videoStage -->
+
   <script>
     // ══════════════════════════════════════════════════
-    //  MOTEUR DE RENDU DYNAMIQUE v2 — TestPermis.fr
+    //  MOTEUR DE RENDU DYNAMIQUE v3 — TestPermis.fr
     //  - Format responsive (ratio-based)
     //  - Countdown intégré dans l'écran question avec tick-tack
     //  - Timing basé sur les durées audio
@@ -444,23 +473,35 @@
       };
     }
 
+    // ─── Calcule et applique le scale viewport → video-stage ───
+    function applyScale() {
+      const stage = document.getElementById('videoStage');
+      const res = window.__RESOLUTION || { width: 1080, height: 1920 };
+      const scaleX = window.innerWidth  / res.width;
+      const scaleY = window.innerHeight / res.height;
+      const s = Math.min(scaleX, scaleY);
+      // Centrer horizontalement en tenant compte du scale
+      const offsetX = (window.innerWidth - res.width * s) / 2;
+      stage.style.transform = `translateX(${offsetX}px) scale(${s})`;
+    }
+
     // ─── Appliquer le format responsive ───
     function applyFormat(format) {
       const res = getResolution(format);
       const r = document.documentElement.style;
       r.setProperty('--vw', res.width + 'px');
       r.setProperty('--vh', res.height + 'px');
-      document.body.style.width = res.width + 'px';
-      document.body.style.height = res.height + 'px';
 
-      // Adapter les tailles de police selon le format
+      // Adapter les tailles de police selon le format (portrait/paysage/carré)
       const isLandscape = res.width > res.height;
-      const isSquare = res.width === res.height;
-      const scale = isLandscape ? 0.7 : isSquare ? 0.85 : 1;
-      document.body.style.fontSize = (scale * 100) + '%';
+      const isSquare    = res.width === res.height;
+      const fontScale   = isLandscape ? 0.7 : isSquare ? 0.85 : 1;
+      document.getElementById('videoStage').style.fontSize = (fontScale * 100) + '%';
 
-      // Stocker la résolution pour Puppeteer
+      // Stocker la résolution puis calculer le scale viewport
       window.__RESOLUTION = res;
+      applyScale();
+      window.addEventListener('resize', applyScale);
 
       console.log(`📐 Format: ${format.ratio || format.platform} → ${res.width}x${res.height}`);
     }
@@ -469,7 +510,7 @@
       const r = document.documentElement.style;
       if (theme.primaryColor) r.setProperty('--primary', theme.primaryColor);
       if (theme.secondaryColor) r.setProperty('--secondary', theme.secondaryColor);
-      if (theme.backgroundColor) { r.setProperty('--bg', theme.backgroundColor); document.body.style.background = theme.backgroundColor; }
+      if (theme.backgroundColor) { r.setProperty('--bg', theme.backgroundColor); document.getElementById('videoStage').style.background = theme.backgroundColor; }
       if (theme.accentGradient) { r.setProperty('--primary', theme.accentGradient[0]); r.setProperty('--primary2', theme.accentGradient[1]); }
       if (theme.fontFamily) { r.setProperty('--font', `'${theme.fontFamily}', sans-serif`); document.body.style.fontFamily = `'${theme.fontFamily}', sans-serif`; }
     }
@@ -514,177 +555,186 @@
       };
     }
 
-    // ─── Appliquer toutes les animations ───
-    function applyAnimations(timing, video) {
-      const t = timing;
-      const tIntro = 0;
-      const tQuestion = t.introDuration;
-      // Le countdown commence après l'audio de la question
-      const tCountdownStart = tQuestion + (video.question.audioDuration || 2) + 1;
-      const tAnswer = tQuestion + t.questionDuration;
-      const tExplanation = tAnswer + t.answerDuration;
-      const tOutro = tExplanation + t.explanationDuration;
-      const totalDuration = tOutro + t.outroDuration;
+    // ─── Helpers séquenceur ───
+    const wait = ms => new Promise(r => setTimeout(r, ms));
 
-      // Progress bar
-      const style = document.createElement('style');
-      style.textContent = `@keyframes progress { from{width:0} to{width:100%} }`;
-      document.head.appendChild(style);
-      document.getElementById('progressBar').style.animation = `progress ${totalDuration}s linear forwards`;
+    // Attend la fin réelle de l'audio, avec fallback timeout pour Puppeteer (headless, pas d'audio)
+    function waitForAudio(audioEl, fallbackDuration) {
+      return new Promise(resolve => {
+        if (!audioEl.src || audioEl.src === window.location.href) {
+          return setTimeout(resolve, (fallbackDuration || 0) * 1000);
+        }
+        let done = false;
+        const finish = () => { if (done) return; done = true; audioEl.removeEventListener('ended', finish); audioEl.removeEventListener('error', finish); resolve(); };
+        audioEl.addEventListener('ended', finish, { once: true });
+        audioEl.addEventListener('error', finish, { once: true });
+        // Fallback Puppeteer : si l'audio ne joue pas, continuer après fallbackDuration + 2s
+        setTimeout(finish, ((fallbackDuration || 5) + 2) * 1000);
+      });
+    }
 
-      // ── Intro ──
-      const intro = document.getElementById('intro');
-      intro.style.animation = `fadeInOut ${t.introDuration}s ease forwards`;
-      intro.style.animationDelay = `${tIntro}s`;
-      intro.querySelector('.logo-container').style.animation = `logoAnim ${t.introDuration - 0.5}s ease forwards`;
+    function showSeq(el) {
+      el.style.pointerEvents = 'auto';
+      el.style.animation = 'fadeIn 0.5s ease forwards';
+    }
 
-      // ── Question (inclut le countdown) ──
-      const question = document.getElementById('question');
-      question.style.animation = `fadeInOut ${t.questionDuration}s ease forwards`;
-      question.style.animationDelay = `${tQuestion}s`;
+    function hideSeq(el) {
+      el.style.pointerEvents = 'none';
+      el.style.animation = 'fadeOut 0.5s ease forwards';
+    }
 
-      const qBadge = question.querySelector('.vrai-faux-badge');
-      qBadge.style.animation = `bounceIn 0.8s ease forwards`;
-      qBadge.style.animationDelay = `${tQuestion + 0.5}s`;
+    // ─── Séquenceur événementiel ───
+    async function runSequencer(video, estimatedTiming) {
+      const t = estimatedTiming;
+      const startTime = performance.now();
 
-      const qIcon = question.querySelector('.question-icon');
-      qIcon.style.animation = `bounceIn 0.6s ease forwards`;
-      qIcon.style.animationDelay = `${tQuestion + 0.2}s`;
+      // Progress bar basée sur la durée estimée
+      const estimatedTotal = t.introDuration + t.questionDuration + t.answerDuration + t.explanationDuration + t.outroDuration;
+      const pbStyle = document.createElement('style');
+      pbStyle.textContent = `@keyframes progress { from{width:0} to{width:100%} }`;
+      document.head.appendChild(pbStyle);
+      document.getElementById('progressBar').style.animation = `progress ${estimatedTotal}s linear forwards`;
+      window.__TOTAL_DURATION = estimatedTotal;
 
+      // ══ INTRO ══
+      const introEl = document.getElementById('intro');
+      showSeq(introEl);
+      introEl.querySelector('.logo-container').style.animation = `logoAnim ${t.introDuration - 0.5}s ease forwards`;
+      playAudio('audioBgMusic');
+      playAudio('audioIntro');
+
+      // Transition après la fin RÉELLE de l'audio intro (pas de timer fixe)
+      await waitForAudio(document.getElementById('audioIntro'), t.introDuration);
+      hideSeq(introEl);
+
+      // ══ QUESTION ══
+      const questionEl = document.getElementById('question');
+      showSeq(questionEl);
+
+      // Animer les éléments de la question avec des décalages
+      questionEl.querySelector('.question-icon').style.animation = 'bounceIn 0.6s ease forwards';
+      setTimeout(() => { questionEl.querySelector('.vrai-faux-badge').style.animation = 'bounceIn 0.8s ease forwards'; }, 300);
       const qMedia = document.getElementById('questionMedia');
-      if (qMedia.style.display !== 'none') {
-        qMedia.style.animation = `bounceIn 0.8s ease forwards`;
-        qMedia.style.animationDelay = `${tQuestion + 0.8}s`;
-      }
+      const qVid   = document.getElementById('questionVideo');
+      if (qMedia.style.display !== 'none') setTimeout(() => { qMedia.style.animation = 'bounceIn 0.8s ease forwards'; }, 600);
+      if (qVid.style.display   !== 'none') setTimeout(() => { qVid.style.animation   = 'bounceIn 0.8s ease forwards'; }, 600);
+      setTimeout(() => { questionEl.querySelector('.question-text').style.animation = 'slideUp 1s ease forwards'; }, 1200);
 
-      const qText = question.querySelector('.question-text');
-      qText.style.animation = `slideUp 1s ease forwards`;
-      qText.style.animationDelay = `${tQuestion + 1.5}s`;
+      // Jouer l'audio après l'apparition du texte
+      await wait(1700);
+      playAudio('audioQuestion');
 
-      // Countdown — apparaît APRÈS la fin de l'audio question
-      const cdOverlay = document.getElementById('countdownOverlay');
-      const cdValue = document.getElementById('countdownValue');
+      // ── Countdown : attend la fin RÉELLE de l'audio question ──
+      await waitForAudio(document.getElementById('audioQuestion'), video.question.audioDuration || 5);
+      await wait(400); // léger buffer
+
+      const cdOverlay   = document.getElementById('countdownOverlay');
+      const cdValue     = document.getElementById('countdownValue');
       const ringProgress = document.getElementById('ringProgress');
-      const circumference = 2 * Math.PI * 65; // r=65
-      ringProgress.style.strokeDasharray = circumference;
+      const circumference = 2 * Math.PI * 65;
+      ringProgress.style.strokeDasharray  = circumference;
       ringProgress.style.strokeDashoffset = '0';
-
       const dot3 = document.getElementById('dot3');
       const dot2 = document.getElementById('dot2');
       const dot1 = document.getElementById('dot1');
+      [dot3, dot2, dot1].forEach(d => { d.className = 'countdown-dot'; });
 
-      // Afficher le countdown après l'audio question
-      setTimeout(() => {
-        cdOverlay.classList.add('visible');
-        cdValue.textContent = '3';
-        cdValue.classList.add('pop');
-        dot3.classList.add('active');
-        ringProgress.style.strokeDashoffset = '0';
-        playAudio('audioSuspense');
-        setTimeout(() => cdValue.classList.remove('pop'), 400);
-      }, tCountdownStart * 1000);
+      // 3
+      cdOverlay.classList.add('visible');
+      cdValue.textContent = '3'; cdValue.classList.add('pop');
+      dot3.classList.add('active');
+      ringProgress.style.strokeDashoffset = '0';
+      playAudio('audioSuspense');
+      setTimeout(() => cdValue.classList.remove('pop'), 400);
+      await wait(1000);
 
-      setTimeout(() => {
-        cdValue.textContent = '2';
-        cdValue.classList.add('pop');
-        dot3.classList.remove('active'); dot3.classList.add('done');
-        dot2.classList.add('active');
-        ringProgress.style.strokeDashoffset = `${circumference / 3}`;
-        playAudio('audioSuspense');
-        setTimeout(() => cdValue.classList.remove('pop'), 400);
-      }, (tCountdownStart + 1) * 1000);
+      // 2
+      cdValue.textContent = '2'; cdValue.classList.add('pop');
+      dot3.classList.remove('active'); dot3.classList.add('done');
+      dot2.classList.add('active');
+      ringProgress.style.strokeDashoffset = `${circumference / 3}`;
+      playAudio('audioSuspense');
+      setTimeout(() => cdValue.classList.remove('pop'), 400);
+      await wait(1000);
 
-      setTimeout(() => {
-        cdValue.textContent = '1';
-        cdValue.classList.add('pop');
-        dot2.classList.remove('active'); dot2.classList.add('done');
-        dot1.classList.add('active');
-        ringProgress.style.strokeDashoffset = `${(circumference / 3) * 2}`;
-        playAudio('audioSuspense');
-        setTimeout(() => cdValue.classList.remove('pop'), 400);
-      }, (tCountdownStart + 2) * 1000);
+      // 1
+      cdValue.textContent = '1'; cdValue.classList.add('pop');
+      dot2.classList.remove('active'); dot2.classList.add('done');
+      dot1.classList.add('active');
+      ringProgress.style.strokeDashoffset = `${(circumference / 3) * 2}`;
+      playAudio('audioSuspense');
+      setTimeout(() => cdValue.classList.remove('pop'), 400);
+      await wait(1000);
 
-      // ── Réponse ──
-      const answer = document.getElementById('answer');
-      answer.style.animation = `fadeInOut ${t.answerDuration}s ease forwards`;
-      answer.style.animationDelay = `${tAnswer}s`;
-      document.getElementById('answerEmoji').style.animation = `shakeIn 0.8s ease forwards`;
-      document.getElementById('answerEmoji').style.animationDelay = `${tAnswer + 0.3}s`;
-      document.getElementById('answerText').style.animation = `shakeIn 0.6s ease forwards`;
-      document.getElementById('answerText').style.animationDelay = `${tAnswer + 0.8}s`;
+      cdOverlay.classList.remove('visible');
+      hideSeq(questionEl);
 
-      // ── Explication ──
-      const explanation = document.getElementById('explanation');
-      explanation.style.animation = `fadeIn 1s ease forwards, fadeOut 1s ease forwards`;
-      explanation.style.animationDelay = `${tExplanation}s, ${tOutro}s`;
+      // ══ RÉPONSE — déclenchée dynamiquement après le dernier tick ══
+      const answerEl = document.getElementById('answer');
+      showSeq(answerEl);
+      await wait(200);
+      document.getElementById('answerEmoji').style.animation = 'shakeIn 0.8s ease forwards';
+      await wait(500);
+      document.getElementById('answerText').style.animation = 'shakeIn 0.6s ease forwards';
+      playAudio('audioAnswer');
 
-      document.getElementById('explanationTitle').style.animation = `slideDown 0.8s ease forwards`;
-      document.getElementById('explanationTitle').style.animationDelay = `${tExplanation + 0.5}s`;
+      await wait(t.answerDuration * 1000);
+      hideSeq(answerEl);
+
+      // ══ EXPLICATION ══
+      const explanationEl = document.getElementById('explanation');
+      showSeq(explanationEl);
+      setTimeout(() => { document.getElementById('explanationTitle').style.animation = 'slideDown 0.8s ease forwards'; }, 300);
 
       const expMedia = document.getElementById('explanationMedia');
-      if (expMedia.style.display !== 'none') {
-        expMedia.style.animation = `bounceIn 0.8s ease forwards`;
-        expMedia.style.animationDelay = `${tExplanation + 1}s`;
-      }
       const mainIcon = document.getElementById('mainIcon');
-      if (mainIcon.style.display !== 'none') {
-        mainIcon.style.animation = `bounceIn 0.8s ease forwards`;
-        mainIcon.style.animationDelay = `${tExplanation + 1}s`;
-      }
+      if (expMedia.style.display !== 'none') setTimeout(() => { expMedia.style.animation = 'bounceIn 0.8s ease forwards'; }, 600);
+      if (mainIcon.style.display !== 'none') setTimeout(() => { mainIcon.style.animation = 'bounceIn 0.8s ease forwards'; }, 600);
 
-      // Points — espacement basé sur la durée audio explication
+      await wait(800);
+      playAudio('audioExplication');
+
+      // Points animés progressivement pendant l'audio explication
       const points = document.querySelectorAll('#explanationPoints .point');
-      const eAudio = video.explication.audioDuration || (t.explanationDuration - 4);
-      const pointStartDelay = tExplanation + 2;
-      const pointInterval = (eAudio - 1) / Math.max(points.length, 1);
+      const eAudioDur = video.explication.audioDuration || 12;
+      const pointInterval = (eAudioDur - 1) / Math.max(points.length, 1);
       points.forEach((p, i) => {
-        p.style.animation = `slideRight 0.8s ease forwards`;
-        p.style.animationDelay = `${pointStartDelay + (i * pointInterval)}s`;
+        setTimeout(() => { p.style.animation = 'slideRight 0.8s ease forwards'; }, i * pointInterval * 1000);
       });
 
-      const badge = document.getElementById('infoBadge');
-      badge.style.animation = `bounceIn 0.6s ease forwards`;
-      badge.style.animationDelay = `${tExplanation + t.explanationDuration - 4}s`;
+      // ── Outro : attend la fin RÉELLE de l'audio explication ──
+      await waitForAudio(document.getElementById('audioExplication'), eAudioDur);
 
-      const source = document.getElementById('sourceText');
-      source.style.animation = `fadeIn 0.5s ease forwards`;
-      source.style.animationDelay = `${tExplanation + t.explanationDuration - 3}s`;
+      // Badge et source après l'audio
+      document.getElementById('infoBadge').style.animation = 'bounceIn 0.6s ease forwards';
+      setTimeout(() => { document.getElementById('sourceText').style.animation = 'fadeIn 0.5s ease forwards'; }, 600);
 
-      // ── Outro ──
-      const outro = document.getElementById('outro');
-      outro.style.animation = `fadeIn 1s ease forwards`;
-      outro.style.animationDelay = `${tOutro}s`;
+      await wait(1500);
+      hideSeq(explanationEl);
 
-      const outroLogo = outro.querySelector('.outro-logo');
-      if (outroLogo) { outroLogo.style.animation = `logoPulse 1s ease forwards`; outroLogo.style.animationDelay = `${tOutro + 0.5}s`; outroLogo.style.opacity = '0'; }
+      // ══ OUTRO ══
+      const outroEl = document.getElementById('outro');
+      showSeq(outroEl);
+      playAudio('audioOutro');
+
+      const outroLogo    = outroEl.querySelector('.outro-logo');
       const outroLogoImg = document.getElementById('outroLogoImage');
-      if (outroLogoImg.style.display !== 'none') { outroLogoImg.style.animation = `logoPulse 1s ease forwards`; outroLogoImg.style.animationDelay = `${tOutro + 0.5}s`; outroLogoImg.style.opacity = '0'; }
+      if (outroLogo)                              { outroLogo.style.opacity    = '0'; setTimeout(() => { outroLogo.style.animation    = 'logoPulse 1s ease forwards'; }, 400); }
+      if (outroLogoImg.style.display !== 'none')  { outroLogoImg.style.opacity = '0'; setTimeout(() => { outroLogoImg.style.animation = 'logoPulse 1s ease forwards'; }, 400); }
 
-      const socialItems = document.querySelectorAll('.social-item');
-      socialItems.forEach((s, i) => {
-        s.style.animation = `slideRight 0.6s ease forwards`;
-        s.style.animationDelay = `${tOutro + 1 + (i * 0.3)}s`;
+      document.querySelectorAll('.social-item').forEach((s, i) => {
+        setTimeout(() => { s.style.animation = 'slideRight 0.6s ease forwards'; }, 800 + i * 300);
       });
-      const subBtn = outro.querySelector('.subscribe-btn');
-      subBtn.style.animation = `bounceIn 0.8s ease forwards`;
-      subBtn.style.animationDelay = `${tOutro + 2}s`;
-      const cta = document.getElementById('ctaText');
-      cta.style.animation = `fadeIn 0.5s ease forwards`;
-      cta.style.animationDelay = `${tOutro + 2.5}s`;
+      setTimeout(() => { outroEl.querySelector('.subscribe-btn').style.animation = 'bounceIn 0.8s ease forwards'; }, 1800);
+      setTimeout(() => { document.getElementById('ctaText').style.animation = 'fadeIn 0.5s ease forwards'; }, 2300);
 
-      // ─── Sons synchronisés ───
-      setTimeout(() => { playAudio('audioIntro'); playAudio('audioBgMusic'); }, tIntro * 1000);
-      // Audio question joué après affichage du texte
-      setTimeout(() => playAudio('audioQuestion'), (tQuestion + 2) * 1000);
-      // Audio réponse (correct/wrong)
-      setTimeout(() => playAudio('audioAnswer'), (tAnswer + 0.3) * 1000);
-      // Audio explication joué au début de l'explication
-      setTimeout(() => playAudio('audioExplication'), (tExplanation + 1) * 1000);
-      setTimeout(() => playAudio('audioOutro'), tOutro * 1000);
+      await wait(t.outroDuration * 1000);
 
-      // Stocker la durée totale pour Puppeteer
-      window.__TOTAL_DURATION = totalDuration;
-      console.log(`⏱️ Durée totale: ${totalDuration}s | Question: ${t.questionDuration}s (audio:${video.question.audioDuration}s + countdown:${t.countdownDuration}s) | Explication: ${t.explanationDuration}s (audio:${video.explication.audioDuration}s)`);
+      // Durée réelle mesurée
+      const elapsed = (performance.now() - startTime) / 1000;
+      window.__TOTAL_DURATION = elapsed;
+      window.__VIDEO_DONE = true;
+      console.log(`✅ Vidéo terminée en ${elapsed.toFixed(1)}s (estimé: ${estimatedTotal}s)`);
     }
 
     // ─── SVG Icons ───
@@ -732,24 +782,11 @@
       return emoji;
     }
 
-    // ─── Remplir le contenu ───
+    // ─── Remplir le contenu et lancer le séquenceur ───
     function renderVideo(data) {
       const settings = data.settings;
       const video = data.video;
       const isVrai = video.reponse.toUpperCase() === "VRAI";
-
-      // ── Format responsive ──
-      applyFormat(settings.format);
-
-      // ── Thème ──
-      applyTheme(settings.theme);
-
-      // ── Sons ──
-      setupSounds(settings.sounds);
-      if (settings.sounds.correct && isVrai) document.getElementById('audioAnswer').src = settings.sounds.correct;
-      if (settings.sounds.wrong && !isVrai) document.getElementById('audioAnswer').src = settings.sounds.wrong;
-      if (video.question.audio) document.getElementById('audioQuestion').src = video.question.audio;
-      if (video.explication.audio) document.getElementById('audioExplication').src = video.explication.audio;
 
       // ── Watermark ──
       const wm = document.getElementById('watermark');
@@ -840,14 +877,44 @@
 
       if (settings.site.callToAction) document.getElementById('ctaText').textContent = settings.site.callToAction;
 
-      // ── Calculer timing intelligent + lancer animations ──
-      const smartTiming = calculateTiming(video);
-      applyAnimations(smartTiming, video);
+      // ── Calculer timing estimé (pour progress bar) + lancer le séquenceur ──
+      const estimatedTiming = calculateTiming(video);
+      runSequencer(video, estimatedTiming).catch(console.error);
     }
 
     // ─── Lancement ───
     const rawData = loadData();
-    renderVideo(rawData);
+
+    // Initialiser le DOM (format, thème, contenu) sans démarrer le séquenceur
+    // Le séquenceur démarre après le clic (politique autoplay Chrome)
+    function setupDOM(data) {
+      const settings = data.settings;
+      const video    = data.video;
+      applyFormat(settings.format);
+      applyTheme(settings.theme);
+      setupSounds(settings.sounds);
+      if (settings.sounds.correct && video.reponse.toUpperCase() === 'VRAI') document.getElementById('audioAnswer').src = settings.sounds.correct;
+      if (settings.sounds.wrong   && video.reponse.toUpperCase() !== 'VRAI') document.getElementById('audioAnswer').src = settings.sounds.wrong;
+      if (video.question.audio)    document.getElementById('audioQuestion').src    = video.question.audio;
+      if (video.explication.audio) document.getElementById('audioExplication').src = video.explication.audio;
+    }
+    setupDOM(rawData);
+
+    document.getElementById('startOverlay').addEventListener('click', function () {
+      this.style.display = 'none';
+
+      // Pré-déverrouiller tous les éléments audio en un seul geste utilisateur
+      // (sans ça Chrome bloque .play() appelé en dehors du handler)
+      ['audioIntro','audioBgMusic','audioQuestion','audioAnswer',
+       'audioExplication','audioOutro','audioSuspense'].forEach(id => {
+        const a = document.getElementById(id);
+        if (a && a.src && a.src !== window.location.href) {
+          a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+        }
+      });
+
+      renderVideo(rawData);
+    }, { once: true });
   </script>
 
 </body>

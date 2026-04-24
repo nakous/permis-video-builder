@@ -1,0 +1,24 @@
+{
+  "name": "permis-video-builder",
+  "version": "1.0.0",
+  "description": "Génère des vidéos quiz **Vrai/Faux** pour permis moto/voiture à partir d'un fichier JSON.\r Les vidéos sont créées en HTML/CSS animé, puis exportables en MP4 via Puppeteer + FFmpeg.",
+  "main": "generate-all.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nakous/permis-video-builder.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/nakous/permis-video-builder/issues"
+  },
+  "homepage": "https://github.com/nakous/permis-video-builder#readme",
+  "dependencies": {
+    "puppeteer": "^24.42.0"
+  }
+}

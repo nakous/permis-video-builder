@@ -1,0 +1,26 @@
+# Dépendances
+node_modules/
+
+# Fichiers générés
+output/
+
+# Frames temporaires (Puppeteer)
+output/
+
+# Vidéos MP4 compilées
+*.mp4
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

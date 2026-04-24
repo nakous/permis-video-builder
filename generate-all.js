@@ -18,7 +18,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 
 // ─── Configuration ───
 const FORMAT_PRESETS = {
@@ -48,7 +48,6 @@ const CONFIG = {
   width: 1080,
   height: 1920,
   fps: 30,
-  durationSec: 37,
 };
 
 // ─── Étape 1 : Générer les fichiers HTML ───
@@ -77,8 +76,10 @@ function generateHTML() {
 
     // Injecter settings + video dans le template
     // Corriger les chemins relatifs: output/ → ../assets/ au lieu de ./assets/
+    // Échapper </script> pour éviter la fermeture prématurée du tag
     const payloadStr = JSON.stringify({ settings, video }, null, 2)
-      .replace(/\.\/assets\//g, '../assets/');
+      .replace(/\.\/assets\//g, '../assets/')
+      .replace(/<\/script>/gi, '<\\/script>');
     const dataScript = `<script>window.__VIDEO_DATA = ${payloadStr};</script>`;
     const html = template.replace('</head>', `${dataScript}\n</head>`);
 
@@ -93,63 +94,213 @@ function generateHTML() {
   return videos;
 }
 
+// ─── Assemblage MP4 avec audio — approche 3 passes ───
+// Passe 1 : frames → vidéo muette
+// Passe 2 : toutes les pistes audio → fichier WAV mixé
+// Passe 3 : mux vidéo + audio → MP4 final
+function buildAudioMix(videoFramesDir, outputMp4, video, settings, totalDuration) {
+  const sounds = settings.sounds;
+  const timing = video.timing;
+
+  const framesPattern = path.join(videoFramesDir, 'frame_%05d.png').replace(/\\/g, '/');
+  const outputPath    = outputMp4.replace(/\\/g, '/');
+  const silentMp4     = outputPath.replace(/\.mp4$/, '-silent.mp4');
+  const mixedWav      = outputPath.replace(/\.mp4$/, '-audio.wav');
+
+  // ── Résolution des chemins assets ──
+  const resolveAsset = (p) => {
+    if (!p) return null;
+    const full = path.resolve(__dirname, p.replace(/^\.\.\//, './').replace(/^\.\//, './'));
+    return fs.existsSync(full) ? full : null;
+  };
+
+  // ── Offsets temporels (ms) ──
+  const tQuestion    = timing.introDuration * 1000;
+  const qAudioMs     = (video.question.audioDuration || 0) * 1000;
+  const tCountdown   = tQuestion + qAudioMs + 1000;
+  const tAnswer      = tQuestion + timing.questionDuration * 1000;
+  const tExplanation = tAnswer + timing.answerDuration * 1000;
+  const tOutro       = tExplanation + timing.explanationDuration * 1000;
+
+  // ── Liste des pistes : { file, delayMs, volume, loop } ──
+  const tracks = [];
+  const bgFile = resolveAsset(sounds.backgroundMusic);
+  if (bgFile) tracks.push({ file: bgFile, delayMs: 0, volume: sounds.backgroundMusicVolume || 0.15, loop: true });
+  const introFile = resolveAsset(sounds.intro);
+  if (introFile) tracks.push({ file: introFile, delayMs: 0, volume: 1 });
+  const qAudioFile = resolveAsset(video.question.audio);
+  if (qAudioFile) tracks.push({ file: qAudioFile, delayMs: tQuestion, volume: 1 });
+  const tickFile = resolveAsset(sounds.suspense);
+  if (tickFile) {
+    tracks.push({ file: tickFile, delayMs: tCountdown,        volume: 1 });
+    tracks.push({ file: tickFile, delayMs: tCountdown + 1000, volume: 1 });
+    tracks.push({ file: tickFile, delayMs: tCountdown + 2000, volume: 1 });
+  }
+  const isCorrect = video.reponse === 'VRAI';
+  const answerFile = resolveAsset(isCorrect ? sounds.correct : sounds.wrong);
+  if (answerFile) tracks.push({ file: answerFile, delayMs: tAnswer, volume: 1 });
+  const explFile = resolveAsset(video.explication.audio);
+  if (explFile) tracks.push({ file: explFile, delayMs: tExplanation, volume: 1 });
+  const outroFile = resolveAsset(sounds.outro);
+  if (outroFile) tracks.push({ file: outroFile, delayMs: tOutro, volume: 1 });
+
+  try {
+    // ══ PASSE 1 : frames PNG → vidéo muette H.264 ══
+    console.log(`  🔧 Passe 1/3 — encodage vidéo (${totalDuration}s à ${CONFIG.fps}fps)...`);
+    execFileSync('ffmpeg', [
+      '-y',
+      '-framerate', String(CONFIG.fps),
+      '-i', framesPattern,
+      '-c:v', 'libx264', '-pix_fmt', 'yuv420p',
+      '-r', String(CONFIG.fps),
+      '-t', String(totalDuration),
+      silentMp4,
+    ], { stdio: 'pipe' });
+
+    if (tracks.length === 0) {
+      // Pas d'audio — renommer la vidéo muette en sortie finale
+      fs.renameSync(silentMp4, outputMp4);
+      console.log(`  ✅ Vidéo créée (sans audio) : ${outputMp4}`);
+      return true;
+    }
+
+    // ══ PASSE 2 : mixer toutes les pistes → WAV ══
+    console.log(`  🔧 Passe 2/3 — mixage audio (${tracks.length} pistes)...`);
+    const audioArgs = ['-y'];
+    const filterParts = [];
+    const mixLabels   = [];
+
+    tracks.forEach((track, i) => {
+      if (track.loop) {
+        audioArgs.push('-stream_loop', '-1', '-t', String(totalDuration));
+      }
+      audioArgs.push('-i', track.file.replace(/\\/g, '/'));
+
+      const label    = `a${i}`;
+      const delayStr = `${Math.round(track.delayMs)}|${Math.round(track.delayMs)}`;
+      let chain = `[${i}:a]adelay=${delayStr}`;
+      if (track.volume !== 1) chain += `,volume=${track.volume}`;
+      chain += `[${label}]`;
+      filterParts.push(chain);
+      mixLabels.push(`[${label}]`);
+    });
+
+    // amix en FFmpeg 4.x divise le volume par N — on compense avec volume=N
+    filterParts.push(
+      `${mixLabels.join('')}amix=inputs=${tracks.length}:duration=longest,volume=${tracks.length}[aout]`
+    );
+
+    audioArgs.push(
+      '-filter_complex', filterParts.join('; '),
+      '-map', '[aout]',
+      '-ar', '44100',
+      '-t', String(totalDuration),
+      mixedWav,
+    );
+    execFileSync('ffmpeg', audioArgs, { stdio: 'pipe' });
+
+    // ══ PASSE 3 : mux vidéo muette + WAV → MP4 final ══
+    console.log(`  🔧 Passe 3/3 — mux vidéo + audio...`);
+    execFileSync('ffmpeg', [
+      '-y',
+      '-i', silentMp4,
+      '-i', mixedWav,
+      '-c:v', 'copy',
+      '-c:a', 'aac', '-b:a', '192k',
+      '-shortest',
+      outputPath,
+    ], { stdio: 'pipe' });
+
+    // Nettoyer les fichiers temporaires
+    fs.unlinkSync(silentMp4);
+    fs.unlinkSync(mixedWav);
+
+    console.log(`  ✅ Vidéo créée (avec audio) : ${outputMp4}`);
+    return true;
+
+  } catch (err) {
+    const msg = err.stderr?.toString() || err.message || String(err);
+    console.error(`  ❌ Erreur FFmpeg :`, msg.split('\n').slice(-5).join('\n'));
+    // Nettoyer les fichiers temporaires partiels
+    for (const tmp of [silentMp4, mixedWav]) {
+      try { if (fs.existsSync(tmp)) fs.unlinkSync(tmp); } catch (_) {}
+    }
+    return false;
+  }
+}
+
 // ─── Étape 2 : Enregistrer en MP4 (Puppeteer + FFmpeg) ───
-async function recordVideo(htmlFile, outputMp4, videoId, settings) {
+async function recordVideo(htmlFile, outputMp4, videoId, settings, video) {
   const puppeteer = require('puppeteer');
   const res = getResolution(settings.format);
 
-  console.log(`\n🎥 Enregistrement vidéo #${videoId} (${res.width}x${res.height})...`);
+  // Durée calculée dynamiquement depuis le timing de la vidéo
+  const totalDuration = Object.values(video.timing).reduce((a, b) => a + b, 0);
+  const totalFrames   = totalDuration * CONFIG.fps;
+  const frameDelay    = 1000 / CONFIG.fps; // ms par frame
+
+  console.log(`\n🎥 Enregistrement vidéo #${videoId} (${res.width}x${res.height}, ${totalDuration}s, ${totalFrames} frames)...`);
 
   const browser = await puppeteer.launch({
     headless: 'new',
-    args: [`--window-size=${res.width},${res.height}`],
+    args: [
+      `--window-size=${res.width},${res.height}`,
+      '--disable-background-timer-throttling',
+      '--disable-renderer-backgrounding',
+      '--disable-backgrounding-occluded-windows',
+    ],
   });
 
   const page = await browser.newPage();
   await page.setViewport({ width: res.width, height: res.height });
 
-  // Dossier frames temporaire pour cette vidéo
+  // Dossier frames temporaire
   const videoFramesDir = path.join(CONFIG.framesDir, `video-${videoId}`);
-  if (fs.existsSync(videoFramesDir)) {
-    fs.rmSync(videoFramesDir, { recursive: true });
-  }
+  if (fs.existsSync(videoFramesDir)) fs.rmSync(videoFramesDir, { recursive: true });
   fs.mkdirSync(videoFramesDir, { recursive: true });
 
-  // Charger le HTML
+  // 1. Charger la page normalement (réseau réel) — AVANT d'activer le virtual time
   const htmlPath = `file:///${htmlFile.replace(/\\/g, '/')}`;
-  await page.goto(htmlPath, { waitUntil: 'networkidle0' });
+  await page.goto(htmlPath, { waitUntil: 'load' });
 
-  // Capturer les frames
-  const totalFrames = CONFIG.durationSec * CONFIG.fps;
-  const frameDelay = 1000 / CONFIG.fps;
+  // 2. CDP — horloge virtuelle déterministe (activée APRÈS la navigation)
+  // Élimine la dérive de framerate causée par le temps de screenshot réel
+  // À ce stade la page est chargée, on fige le temps JS/CSS à t=0
+  const client = await page.createCDPSession();
+  await client.send('Emulation.setVirtualTimePolicy', { policy: 'pause' });
 
+  // Capture frame par frame : screenshot → avancer le temps virtuel d'exactement 1 frame
   for (let i = 0; i < totalFrames; i++) {
     const frameFile = path.join(videoFramesDir, `frame_${String(i).padStart(5, '0')}.png`);
     await page.screenshot({ path: frameFile, type: 'png' });
-    await new Promise(r => setTimeout(r, frameDelay));
+
+    // Préparer le listener AVANT d'envoyer la commande (évite la race condition)
+    const budgetExpired = new Promise(resolve => {
+      client.once('Emulation.virtualTimeBudgetExpired', resolve);
+    });
+    await client.send('Emulation.setVirtualTimePolicy', {
+      policy: 'advance',
+      budget: frameDelay,
+      maxVirtualTimeTaskStarvationCount: 0,
+    });
+    await budgetExpired;
 
     if (i % CONFIG.fps === 0) {
-      const sec = Math.floor(i / CONFIG.fps);
-      console.log(`  📸 ${sec}s / ${CONFIG.durationSec}s (${Math.round(i/totalFrames*100)}%)`);
+      console.log(`  📸 ${Math.floor(i / CONFIG.fps)}s / ${totalDuration}s (${Math.round(i / totalFrames * 100)}%)`);
     }
   }
 
   await browser.close();
 
-  // Assembler avec FFmpeg
-  console.log(`  🔧 Assemblage FFmpeg...`);
-  const ffmpegCmd = `ffmpeg -y -framerate ${CONFIG.fps} -i "${videoFramesDir}/frame_%05d.png" -c:v libx264 -pix_fmt yuv420p -r ${CONFIG.fps} "${outputMp4}"`;
+  // Mixer frames + toutes les pistes audio → MP4
+  const success = buildAudioMix(videoFramesDir, outputMp4, video, settings, totalDuration);
 
-  try {
-    execSync(ffmpegCmd, { stdio: 'pipe' });
-    console.log(`  ✅ Vidéo créée : ${outputMp4}`);
-  } catch (err) {
-    console.error(`  ❌ Erreur FFmpeg. Commande manuelle :`);
-    console.log(`  ${ffmpegCmd}`);
+  // Nettoyer les frames temporaires seulement si le MP4 a bien été créé
+  if (success) {
+    fs.rmSync(videoFramesDir, { recursive: true });
+  } else {
+    console.log(`  ⚠️ Frames conservées dans : ${videoFramesDir}`);
   }
-
-  // Nettoyer les frames
-  fs.rmSync(videoFramesDir, { recursive: true });
 }
 
 // ─── Étape 3 : Enregistrer toutes les vidéos ───
@@ -175,7 +326,7 @@ async function recordAll(filterById) {
       continue;
     }
 
-    await recordVideo(htmlFile, mp4File, video.id, rawData.settings);
+    await recordVideo(htmlFile, mp4File, video.id, rawData.settings, video);
   }
 }
 
@@ -184,7 +335,14 @@ async function main() {
   const args = process.argv.slice(2);
   const shouldRecord = args.includes('--record');
   const idIndex = args.indexOf('--id');
-  const filterId = idIndex !== -1 ? parseInt(args[idIndex + 1]) : null;
+  let filterId = null;
+  if (idIndex !== -1) {
+    filterId = parseInt(args[idIndex + 1]);
+    if (Number.isNaN(filterId)) {
+      console.error("  ❌ --id doit être suivi d'un nombre. Ex: node generate-all.js --record --id 3");
+      process.exit(1);
+    }
+  }
 
   // Toujours générer les HTML
   generateHTML();
