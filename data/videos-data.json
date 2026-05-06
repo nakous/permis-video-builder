@@ -1,0 +1,255 @@
+{
+  "settings": {
+    "site": {
+      "name": "TestPermis.fr",
+      "url": "https://testpermis.fr",
+      "logo": "./assets/brand/logo.png",
+      "logoAnimation": "zoom-bounce",
+      "watermark": "./assets/brand/watermark.png",
+      "callToAction": "Testez vos connaissances sur testpermis.fr !"
+    },
+    "sounds": {
+      "intro": "./assets/sounds/intro.mp3",
+      "suspense": "./assets/sounds/tick.mp3",
+      "correct": "./assets/sounds/correct.mp3",
+      "wrong": "./assets/sounds/wrong.mp3",
+      "outro": "./assets/sounds/outro.mp3",
+      "backgroundMusic": "./assets/sounds/bg-music.mp3",
+      "backgroundMusicVolume": 0.15
+    },
+    "theme": {
+      "primaryColor": "#4facfe",
+      "secondaryColor": "#f5576c",
+      "backgroundColor": "#0a0a2e",
+      "accentGradient": ["#4facfe", "#00f2fe"],
+      "dangerGradient": ["#ff4757", "#c44569"],
+      "successGradient": ["#2ed573", "#05c46b"],
+      "warningGradient": ["#ffa502", "#ff6348"],
+      "fontFamily": "Montserrat"
+    },
+    "socials": {
+      "tiktok": "@testpermis.fr",
+      "instagram": "@testpermis.fr",
+      "youtube": "TestPermis.fr",
+      "facebook": "",
+      "website": "testpermis.fr"
+    },
+    "format": {
+      "ratio": "9:16",
+      "platform": "tiktok",
+      "fps": 30
+    }
+  },
+  "videos": [
+    {
+      "id": 1,
+      "sujet": "Panneau STOP",
+      "categorie": "Signalisation",
+      "emoji": "🛑",
+      "difficulty": "facile",
+      "tags": ["permis moto", "code de la route", "panneau stop", "signalisation"],
+      "source": "Article R415-6 du Code de la route",
+      "question": {
+        "texte": "« Au panneau STOP, je peux simplement ralentir sans m'arrêter s'il n'y a personne. »",
+        "media": "./assets/videos/q1/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q1/question.mp3",
+        "audioDuration": 5,
+        "voiceScript": "Vrai ou Faux ? Au panneau stop, je peux simplement ralentir sans m'arrêter s'il n'y a personne."
+      },
+      "reponse": "FAUX",
+      "explication": {
+        "titre": "L'arrêt est OBLIGATOIRE",
+        "media": "./assets/videos/q1/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q1/explication.mp3",
+        "audioDuration": 13,
+        "voiceScript": "Le panneau STOP impose un arrêt TOTAL du véhicule au niveau de la ligne blanche. Même si personne ne vient, vous devez vous arrêter complètement. En cas de non-respect, c'est 4 points en moins et 135 euros d'amende.",
+        "points": [
+          { "icon": "🛑", "texte": "L'arrêt complet est obligatoire, même si la voie est libre" },
+          { "icon": "📍", "texte": "Arrêtez-vous à la ligne d'effet (bande blanche au sol)" },
+          { "icon": "💰", "texte": "Infraction : -4 points + 135€ d'amende" },
+          { "icon": "✅", "texte": "Après l'arrêt, cédez le passage avant de repartir" }
+        ],
+        "badge": { "texte": "⚠️ -4 pts + 135€", "type": "danger" }
+      },
+      "timing": {
+        "introDuration": 3,
+        "questionDuration": 10,
+        "countdownDuration": 3,
+        "answerDuration": 4,
+        "explanationDuration": 17,
+        "outroDuration": 4
+      },
+      "description": "Panneau STOP : savez-vous vraiment ce qu'il impose ? Quiz Vrai/Faux ! #permis #codeleroute #stop"
+    },
+    {
+      "id": 2,
+      "sujet": "Angle mort moto",
+      "categorie": "Conduite Moto",
+      "emoji": "🏍️",
+      "difficulty": "moyen",
+      "tags": ["permis moto", "angle mort", "sécurité moto"],
+      "source": "Prévention routière - MAIF",
+      "question": {
+        "texte": "« En moto, je suis toujours visible dans les rétroviseurs des voitures. »",
+        "media": "./assets/videos/q2/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q2/question.mp3",
+        "audioDuration": 4,
+        "voiceScript": "Vrai ou Faux ? En moto, je suis toujours visible dans les rétroviseurs des voitures."
+      },
+      "reponse": "FAUX",
+      "explication": {
+        "titre": "L'angle mort est un DANGER mortel",
+        "media": "./assets/videos/q2/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q2/explication.mp3",
+        "audioDuration": 14,
+        "voiceScript": "C'est faux. Une moto est facilement cachée dans l'angle mort. Évitez de rester à côté d'un véhicule. 30 pour cent des accidents moto sont causés par les angles morts.",
+        "points": [
+          { "icon": "🏍️", "texte": "Une moto est facilement cachée dans l'angle mort d'une voiture" },
+          { "icon": "👁️", "texte": "Évitez de rester à côté d'un véhicule, dépassez ou restez derrière" },
+          { "icon": "⚠️", "texte": "30% des accidents moto sont causés par les angles morts" },
+          { "icon": "💡", "texte": "Portez un gilet réfléchissant pour être plus visible" }
+        ],
+        "badge": { "texte": "⚠️ 30% des accidents", "type": "warning" }
+      },
+      "timing": {
+        "introDuration": 3,
+        "questionDuration": 9,
+        "countdownDuration": 3,
+        "answerDuration": 4,
+        "explanationDuration": 18,
+        "outroDuration": 4
+      },
+      "description": "Angles morts en moto : un danger invisible ! #moto #anglemort #securiteroutiere"
+    },
+    {
+      "id": 3,
+      "sujet": "Priorité à droite",
+      "categorie": "Signalisation",
+      "emoji": "➡️",
+      "difficulty": "facile",
+      "tags": ["permis moto", "priorité à droite", "intersection"],
+      "source": "Article R415-5 du Code de la route",
+      "question": {
+        "texte": "« À une intersection sans signalisation, je dois céder le passage au véhicule venant de ma gauche. »",
+        "media": "./assets/videos/q3/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q3/question.mp3",
+        "audioDuration": 5,
+        "voiceScript": "Vrai ou Faux ? À une intersection sans signalisation, je dois céder le passage au véhicule venant de ma gauche."
+      },
+      "reponse": "FAUX",
+      "explication": {
+        "titre": "Priorité au véhicule venant de DROITE",
+        "media": "./assets/videos/q3/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q3/explication.mp3",
+        "audioDuration": 14,
+        "voiceScript": "C'est faux. Sans panneau, le véhicule venant de droite est prioritaire. Ne pas céder la priorité c'est 4 points en moins et 135 euros d'amende.",
+        "points": [
+          { "icon": "➡️", "texte": "Sans panneau, le véhicule venant de DROITE est prioritaire" },
+          { "icon": "🔍", "texte": "Ralentissez et regardez à droite à chaque intersection" },
+          { "icon": "💰", "texte": "Ne pas céder la priorité : -4 points + 135€ d'amende" },
+          { "icon": "📍", "texte": "Exception : les ronds-points où les véhicules engagés sont prioritaires" }
+        ],
+        "badge": { "texte": "⚠️ -4 pts + 135€", "type": "danger" }
+      },
+      "timing": {
+        "introDuration": 3,
+        "questionDuration": 10,
+        "countdownDuration": 3,
+        "answerDuration": 4,
+        "explanationDuration": 18,
+        "outroDuration": 4
+      },
+      "description": "Priorité à droite : la règle que beaucoup oublient ! #prioriteadroite #codeleroute"
+    },
+    {
+      "id": 4,
+      "sujet": "Casque moto",
+      "categorie": "Équipement Moto",
+      "emoji": "🪖",
+      "difficulty": "facile",
+      "tags": ["permis moto", "casque", "équipement", "sécurité"],
+      "source": "Article R431-1 du Code de la route",
+      "question": {
+        "texte": "« Je peux rouler en moto sans casque si je roule à moins de 30 km/h. »",
+        "media": "./assets/videos/q4/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q4/question.mp3",
+        "audioDuration": 4,
+        "voiceScript": "Vrai ou Faux ? Je peux rouler en moto sans casque si je roule à moins de 30 kilomètres heure."
+      },
+      "reponse": "FAUX",
+      "explication": {
+        "titre": "Le casque est TOUJOURS obligatoire",
+        "media": "./assets/videos/q4/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q4/explication.mp3",
+        "audioDuration": 13,
+        "voiceScript": "C'est totalement faux. Le casque est obligatoire pour le conducteur et le passager. Sans casque c'est 3 points retirés et 135 euros d'amende. Le casque réduit de 70 pour cent le risque de blessure à la tête.",
+        "points": [
+          { "icon": "🪖", "texte": "Le casque est obligatoire pour le conducteur ET le passager" },
+          { "icon": "✅", "texte": "Il doit être homologué (norme ECE 22.05 ou 22.06)" },
+          { "icon": "💰", "texte": "Sans casque : -3 points + 135€ d'amende" },
+          { "icon": "🧠", "texte": "Le casque réduit de 70% le risque de blessure à la tête" }
+        ],
+        "badge": { "texte": "🧠 -70% blessures tête", "type": "success" }
+      },
+      "timing": {
+        "introDuration": 3,
+        "questionDuration": 9,
+        "countdownDuration": 3,
+        "answerDuration": 4,
+        "explanationDuration": 17,
+        "outroDuration": 4
+      },
+      "description": "Casque moto obligatoire : pas d'exception ! #casque #moto #securite"
+    },
+    {
+      "id": 5,
+      "sujet": "Distance de freinage",
+      "categorie": "Conduite Moto",
+      "emoji": "🛞",
+      "difficulty": "difficile",
+      "tags": ["permis moto", "freinage", "pluie", "sécurité"],
+      "source": "Prévention routière - Sécurité routière",
+      "question": {
+        "texte": "« À 50 km/h sur route mouillée, ma distance de freinage est la même que sur route sèche. »",
+        "media": "./assets/videos/q5/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q5/question.mp3",
+        "audioDuration": 5,
+        "voiceScript": "Vrai ou Faux ? À 50 kilomètres heure sur route mouillée, ma distance de freinage est la même que sur route sèche."
+      },
+      "reponse": "FAUX",
+      "explication": {
+        "titre": "La distance de freinage DOUBLE sur route mouillée",
+        "media": "./assets/videos/q5/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q5/explication.mp3",
+        "audioDuration": 14,
+        "voiceScript": "C'est faux. Sur route sèche à 50 km/h il faut 14 mètres pour freiner. Sur route mouillée cette distance double. En moto le risque de glissade augmente fortement sous la pluie.",
+        "points": [
+          { "icon": "🛞", "texte": "Sur route sèche à 50 km/h : environ 14 mètres de freinage" },
+          { "icon": "🌧️", "texte": "Sur route mouillée : la distance double (28 mètres !)" },
+          { "icon": "🏍️", "texte": "En moto, le risque de glissade augmente fortement sous la pluie" },
+          { "icon": "💡", "texte": "Augmentez les distances de sécurité par temps de pluie" }
+        ],
+        "badge": { "texte": "🌧️ Distance x2 sur pluie", "type": "warning" }
+      },
+      "timing": {
+        "introDuration": 3,
+        "questionDuration": 10,
+        "countdownDuration": 3,
+        "answerDuration": 4,
+        "explanationDuration": 18,
+        "outroDuration": 4
+      },
+      "description": "Distance de freinage sous la pluie : le piège mortel ! #freinage #pluie #moto"
+    }
+  ]
+}

@@ -27,7 +27,6 @@ testpermis-video-workflow/
 ├── template.html              ← Template maître (CSS animations + JS dynamique)
 ├── videos-data.json           ← Données : settings globaux + tableau de vidéos
 ├── generate-all.js            ← Script Node.js : JSON → HTML (+ MP4 optionnel)
-├── generate-placeholders.js   ← Génère les fichiers assets placeholder
 ├── README.md
 ├── assets/
 │   ├── logo.png               ← Logo du site (500x500px, fond transparent)
@@ -159,28 +158,4 @@ Change `settings.format.platform` dans `videos-data.json` pour switcher.
 
 ---
 
-## 🔊 Où trouver les assets
-
-| Type | Sites gratuits |
-|------|---------------|
-| **Sons/Jingles** | [Pixabay](https://pixabay.com/sound-effects/) · [Mixkit](https://mixkit.co/free-sound-effects/) · [Freesound](https://freesound.org/) |
-| **Voix-off (TTS)** | [OpenAI TTS API](https://platform.openai.com/docs/guides/text-to-speech) (voix "nova" recommandée) |
-| **Images** | [OpenAI DALL-E](https://platform.openai.com/docs/guides/images) · [Unsplash](https://unsplash.com/) |
-
----
-
-## 🔄 Pipeline n8n (à venir)
-
-```
-GPT-5 → génère question/réponse/explication
-  ↓
-GPT TTS → génère audio voix-off (question + explication)
-  ↓
-GPT Image → génère illustrations
-  ↓
-Remplit videos-data.json
-  ↓
-node generate-all.js --record → MP4
-  ↓
-Upload TikTok / YouTube / Instagram
-```
+ 

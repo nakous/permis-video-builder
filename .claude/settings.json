@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mv template.html engine/template.html)",
+      "Bash(mv assets/style.css engine/style.css)",
+      "Bash(mv assets/script.js engine/script.js)",
+      "Bash(mv videos-data.json data/videos-data.json)",
+      "Bash(mv assets/logo.png assets/brand/logo.png)",
+      "Bash(mv \"assets/media/q1-panneau-stop.png\" assets/videos/q1/question.png)",
+      "Bash(mv \"assets/media/q1-explication-stop.png\" assets/videos/q1/explication.png)",
+      "Bash(rmdir assets/audio)",
+      "Bash(rmdir assets/media)",
+      "Bash(node scripts/generate-all.js)"
+    ]
+  }
+}

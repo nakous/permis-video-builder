@@ -13,17 +13,4 @@ Remplacez ces fichiers par vos vrais fichiers audio MP3.
 | `outro.mp3` | 2-3s | Jingle de fin |
 | `bg-music.mp3` | 30-60s | Musique de fond (loop, volume bas) |
 
-## 🎵 Où trouver des sons gratuits
 
-- **Pixabay** : https://pixabay.com/sound-effects/
-- **Freesound** : https://freesound.org/
-- **Mixkit** : https://mixkit.co/free-sound-effects/
-- **Zapsplat** : https://www.zapsplat.com/
-
-## Recherches suggérées
-
-- intro/outro : "short jingle", "logo reveal", "notification"
-- tick : "clock tick", "timer tick", "countdown beep"
-- correct : "success", "correct answer", "ding"
-- wrong : "wrong answer", "buzzer", "fail"
-- bg-music : "quiz background", "lo-fi beat", "chill background"
