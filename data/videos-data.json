@@ -25,7 +25,7 @@
       "dangerGradient": ["#EF4444", "#DC2626"],
       "successGradient": ["#2ECBA1", "#059669"],
       "warningGradient": ["#F59E0B", "#D97706"],
-      "fontFamily": "Nunito"
+      "fontFamily": "Roboto"
     },
     "socials": {
       "tiktok": "@testpermis.fr",
@@ -60,7 +60,7 @@
       "reponse": "A - 80 km/h",
       "explication": {
         "titre": "80 km/h max en délai probatoire",
-        "media": "./assets/videos/q1/explication.png",
+        "media": "./assets/videos/q1/question.png",
         "mediaType": "image",
         "audio": "./assets/videos/q1/explication.mp3",
         "points": [
@@ -71,11 +71,393 @@
         ],
         "badge": { "texte": "80 km/h maxi - 3 ans", "type": "warning" }
       },
-      "timing": {
-        "introDuration": 4,
-        "countdownDuration": 3,
-        "outroDuration": 4
-      }
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 2,
+      "sujet": "Piéton sur passage",
+      "categorie": "Conduite",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "",
+        "choix": [
+          { "lettre": "A", "texte": "Je klaxonne" },
+          { "lettre": "B", "texte": "Je m'arrête" },
+          { "lettre": "C", "texte": "J'accélère" }
+        ],
+        "media": "./assets/videos/q2/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q2/question.mp3"
+      },
+      "reponse": "B - Je m'arrête",
+      "explication": {
+        "titre": "Priorité absolue au piéton",
+        "media": "./assets/videos/q2/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q2/explication.mp3",
+        "points": [
+          { "texte": "Un piéton qui manifeste l'intention de traverser est prioritaire" },
+          { "texte": "Le conducteur doit toujours s'arrêter pour le laisser passer" },
+          { "texte": "Klaxonner ou accélérer est dangereux et interdit" },
+          { "texte": "Refus de priorité piéton : -6 points + 135€ d'amende" }
+        ],
+        "badge": { "texte": "-6 pts + 135€", "type": "danger" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 3,
+      "sujet": "Feu tricolore éteint",
+      "categorie": "Signalisation",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Le feu est éteint, je cède le passage aux usagers venant de droite :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q3/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q3/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Feu éteint → priorité à droite",
+        "media": "./assets/videos/q3/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q3/explication.mp3",
+        "points": [
+          { "texte": "Un feu tricolore en panne devient inactif" },
+          { "texte": "Sans autre signalisation, la priorité à droite s'applique" },
+          { "texte": "Ralentissez à l'approche de chaque carrefour" },
+          { "texte": "Non-respect priorité droite : -4 points + 135€" }
+        ],
+        "badge": { "texte": "Priorité à droite", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 4,
+      "sujet": "Virages dangereux",
+      "categorie": "Signalisation",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "La signalisation annonce une succession de virages dangereux dont le premier sera à :",
+        "choix": [
+          { "lettre": "A", "texte": "droite" },
+          { "lettre": "B", "texte": "gauche" }
+        ],
+        "media": "./assets/videos/q4/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q4/question.mp3"
+      },
+      "reponse": "A - droite",
+      "explication": {
+        "titre": "Premier virage à droite",
+        "media": "./assets/videos/q4/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q4/explication.mp3",
+        "points": [
+          { "texte": "Le panneau A1 indique une succession de virages dangereux" },
+          { "texte": "La forme du panneau montre le sens du premier virage" },
+          { "texte": "Adaptez votre vitesse AVANT d'entrer en virage" },
+          { "texte": "Ne dépassez jamais en virage" }
+        ],
+        "badge": { "texte": "Adapter la vitesse", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 5,
+      "sujet": "Dépassement avant sortie",
+      "categorie": "Conduite",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Je sors de l'autoroute à la prochaine sortie, je dépasse :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q5/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q5/question.mp3"
+      },
+      "reponse": "B - NON",
+      "explication": {
+        "titre": "Pas de dépassement avant la sortie",
+        "media": "./assets/videos/q5/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q5/explication.mp3",
+        "points": [
+          { "texte": "Avant une sortie, restez sur la voie de droite" },
+          { "texte": "Un dépassement ferait manquer la sortie" },
+          { "texte": "Anticipez avec le clignotant droit 100 m avant" },
+          { "texte": "Surveillez les angles morts avant tout changement" }
+        ],
+        "badge": { "texte": "Anticiper la sortie", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 6,
+      "sujet": "Distance derrière un poids lourd",
+      "categorie": "Sécurité",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "L'absence de visibilité à travers ce véhicule impose d'augmenter l'intervalle de sécurité :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q6/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q6/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Augmenter la distance derrière un PL",
+        "media": "./assets/videos/q6/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q6/explication.mp3",
+        "points": [
+          { "texte": "Un poids lourd masque la visibilité vers l'avant" },
+          { "texte": "Augmentez la distance pour mieux anticiper" },
+          { "texte": "Vous êtes invisible dans son rétro si trop proche" },
+          { "texte": "Règle des 2 secondes minimum, plus derrière un PL" }
+        ],
+        "badge": { "texte": "Distance x2 derrière PL", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 7,
+      "sujet": "Zone de danger temporaire",
+      "categorie": "Signalisation",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "",
+        "choix": [
+          { "lettre": "A", "texte": "Je freine" },
+          { "lettre": "B", "texte": "Je dépasse" },
+          { "lettre": "C", "texte": "Je klaxonne" }
+        ],
+        "media": "./assets/videos/q7/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q7/question.mp3"
+      },
+      "reponse": "A - Je freine",
+      "explication": {
+        "titre": "Zone de danger : ralentir",
+        "media": "./assets/videos/q7/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q7/explication.mp3",
+        "points": [
+          { "texte": "Le panneau de danger annonce une zone à risque" },
+          { "texte": "Les feux orange signalent un véhicule lent ou arrêté" },
+          { "texte": "Ralentir est la seule option sûre" },
+          { "texte": "Préparez-vous à un arrêt complet si nécessaire" }
+        ],
+        "badge": { "texte": "Ralentir obligatoire", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 8,
+      "sujet": "Dépassement caravane et vent",
+      "categorie": "Conduite",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Lors du dépassement de la caravane, je risque de faire un écart de trajectoire :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q8/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q8/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Vent fort = risque d'écart",
+        "media": "./assets/videos/q8/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q8/explication.mp3",
+        "points": [
+          { "texte": "La manche à air indique la force et direction du vent" },
+          { "texte": "Un véhicule haut crée des turbulences au dépassement" },
+          { "texte": "Tenez fermement le volant pendant la manœuvre" },
+          { "texte": "Anticipez les bourrasques à la sortie du dépassement" }
+        ],
+        "badge": { "texte": "Tenir fermement le volant", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 9,
+      "sujet": "Feux la nuit en agglomération",
+      "categorie": "Éclairage",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "J'utilise de préférence en agglomération la nuit :",
+        "choix": [
+          { "lettre": "A", "texte": "les feux de position seuls" },
+          { "lettre": "B", "texte": "les feux de croisement" }
+        ],
+        "media": "./assets/videos/q9/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q9/question.mp3"
+      },
+      "reponse": "B - les feux de croisement",
+      "explication": {
+        "titre": "Feux de croisement en agglomération",
+        "media": "./assets/videos/q9/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q9/explication.mp3",
+        "points": [
+          { "texte": "Les feux de position seuls sont insuffisants pour voir" },
+          { "texte": "Les feux de croisement sont obligatoires de nuit" },
+          { "texte": "Permettent de mieux voir ET d'être vu" },
+          { "texte": "Pas d'éblouissement des autres conducteurs" }
+        ],
+        "badge": { "texte": "Voir et être vu", "type": "success" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 10,
+      "sujet": "Aquaplanage sous la pluie",
+      "categorie": "Conduite",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "La chaussée présente des risques d'aquaplanage :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q10/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q10/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Pluie = risque d'aquaplanage",
+        "media": "./assets/videos/q10/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q10/explication.mp3",
+        "points": [
+          { "texte": "L'aquaplanage survient sur chaussée mouillée" },
+          { "texte": "Les pneus perdent l'adhérence sur le film d'eau" },
+          { "texte": "Réduisez la vitesse de 20 km/h sous la pluie" },
+          { "texte": "Augmentez vos distances de sécurité" }
+        ],
+        "badge": { "texte": "Réduire vitesse -20 km/h", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 11,
+      "sujet": "Véhicule d'intervention sur BAU",
+      "categorie": "Conduite",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Des piétons sont susceptibles d'être sur la chaussée :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q11/question.jpg",
+        "mediaType": "image",
+        "audio": "./assets/videos/q11/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Corridor de sécurité obligatoire",
+        "media": "./assets/videos/q11/question.jpg",
+        "mediaType": "image",
+        "audio": "./assets/videos/q11/explication.mp3",
+        "points": [
+          { "texte": "Véhicule d'intervention sur BAU = agents sur la chaussée" },
+          { "texte": "Ralentissez et écartez-vous au maximum" },
+          { "texte": "Corridor de sécurité obligatoire depuis 2018" },
+          { "texte": "Non-respect : -4 points + 135€ d'amende" }
+        ],
+        "badge": { "texte": "Corridor de sécurité", "type": "danger" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 12,
+      "sujet": "Triangle de signalisation",
+      "categorie": "Sécurité",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "Pour baliser un accident sur la route, je place un triangle de sécurité à environ :",
+        "choix": [
+          { "lettre": "A", "texte": "30 m" },
+          { "lettre": "B", "texte": "100 m" }
+        ],
+        "media": "./assets/videos/q12/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q12/question.mp3"
+      },
+      "reponse": "A - 30 m",
+      "explication": {
+        "titre": "Triangle à 30 m minimum",
+        "media": "./assets/videos/q12/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q12/explication.mp3",
+        "points": [
+          { "texte": "Distance minimale : 30 m derrière le véhicule" },
+          { "texte": "Plus loin en sortie de virage ou sommet de côte" },
+          { "texte": "Portez le gilet jaune avant de sortir du véhicule" },
+          { "texte": "Triangle + gilet : obligation légale" }
+        ],
+        "badge": { "texte": "30 m + gilet jaune", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+    },
+    {
+      "id": 13,
+      "sujet": "Remplacement de pneumatique",
+      "categorie": "Mécanique",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "Lors du remplacement d'un pneumatique, je tiens compte des caractéristiques préconisées par le constructeur du véhicule :",
+        "choix": [
+          { "lettre": "A", "texte": "OUI" },
+          { "lettre": "B", "texte": "NON" }
+        ],
+        "media": "./assets/videos/q13/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q13/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Respecter les pneus constructeur",
+        "media": "./assets/videos/q13/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q13/explication.mp3",
+        "points": [
+          { "texte": "Dimensions, indice de charge et vitesse à respecter" },
+          { "texte": "Sur un même essieu : pneus identiques obligatoires" },
+          { "texte": "Niveau d'usure équilibré entre les 2 pneus" },
+          { "texte": "Pneus non conformes : amende + danger en conduite" }
+        ],
+        "badge": { "texte": "Pneus identiques par essieu", "type": "warning" }
+      },
+      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
     }
   ]
 }

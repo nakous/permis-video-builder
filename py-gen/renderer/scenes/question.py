@@ -108,11 +108,12 @@ def make_frame(t, video_data, settings, progress=0.0):
     draw = ImageDraw.Draw(base)
 
     # ── Calcul positions verticales (espacement uniforme GAP) ─────────────────
-    CAT_Y       = img_bottom + GAP
-    cat_h       = 52
-    Q_Y         = CAT_Y + cat_h + GAP
-    q_h         = multiline_height(q_text, TEXT_W - 16, 44, "Bold", line_spacing=1.35)
-    SEP_Y       = Q_Y + q_h + GAP
+    CAT_Y     = img_bottom + GAP
+    cat_h     = 52
+    has_q     = bool(q_text and q_text.strip())
+    Q_Y       = CAT_Y + cat_h + GAP
+    q_h       = multiline_height(q_text, TEXT_W - 16, 44, "Bold", line_spacing=1.35) if has_q else 0
+    SEP_Y     = Q_Y + q_h + GAP if has_q else CAT_Y + cat_h + GAP
     CHOICES_TOP = SEP_Y + GAP + 8
 
     # ── Catégorie (fade-in sous l'image) ──────────────────────────────────────
@@ -131,7 +132,7 @@ def make_frame(t, video_data, settings, progress=0.0):
     q_off   = int(interpolate(80, 0, q_prog, 1.0, ease_out))
     q_alpha = q_prog
 
-    if q_alpha > 0.02:
+    if has_q and q_alpha > 0.02:
         bg_h = q_h + 32
         base = draw_card(base, PAD_H - 16, Q_Y + q_off - 8,
                          WIDTH - (PAD_H - 16) * 2, bg_h,
