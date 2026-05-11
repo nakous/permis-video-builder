@@ -120,45 +120,35 @@
       if (a && a.src && a.src !== window.location.href) a.play().catch(() => {});
     }
 
-    // ─── Timing intelligent basé sur les durées audio ───
+    // ─── Durées fixes uniquement (question et explication sont lues sur audioEl.duration) ───
     function calculateTiming(video) {
       const t = video.timing;
-      const qAudio = video.question.audioDuration || 0;
-      const eAudio = video.explication.audioDuration || 0;
-
-      // questionDuration = max(temps configuré, audioDuration + countdown + 2s buffer)
-      const minQuestionTime = qAudio + t.countdownDuration + 2;
-      const questionDuration = Math.max(t.questionDuration, minQuestionTime);
-
-      // explanationDuration = max(temps configuré, audioDuration + 3s buffer)
-      const minExplanationTime = eAudio + 3;
-      const explanationDuration = Math.max(t.explanationDuration, minExplanationTime);
-
       return {
-        introDuration: t.introDuration,
-        questionDuration,
+        introDuration:     t.introDuration,
         countdownDuration: t.countdownDuration,
-        answerDuration: t.answerDuration,
-        explanationDuration,
-        outroDuration: t.outroDuration
+        answerDuration:    t.answerDuration,
+        outroDuration:     t.outroDuration
       };
     }
 
     // ─── Helpers séquenceur ───
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
-    // Attend la fin réelle de l'audio, avec fallback timeout pour Puppeteer (headless, pas d'audio)
-    function waitForAudio(audioEl, fallbackDuration) {
+    // Attend la fin réelle de l'audio — se base UNIQUEMENT sur audioEl.duration (durée réelle du fichier)
+    // Ne jamais utiliser audioDuration du JSON comme timer pour question et explication
+    function waitForAudio(audioEl) {
       return new Promise(resolve => {
         if (!audioEl.src || audioEl.src === window.location.href) {
-          return setTimeout(resolve, (fallbackDuration || 0) * 1000);
+          return resolve();
         }
         let done = false;
-        const finish = () => { if (done) return; done = true; audioEl.removeEventListener('ended', finish); audioEl.removeEventListener('error', finish); resolve(); };
+        const finish = () => { if (done) return; done = true; audioEl.removeEventListener('ended', finish); resolve(); };
         audioEl.addEventListener('ended', finish, { once: true });
-        audioEl.addEventListener('error', finish, { once: true });
-        // Fallback Puppeteer : si l'audio ne joue pas, continuer après fallbackDuration + 2s
-        setTimeout(finish, ((fallbackDuration || 5) + 2) * 1000);
+        // Timer basé sur la durée réelle détectée par le browser — jamais sur le JSON
+        if (audioEl.duration && isFinite(audioEl.duration)) {
+          setTimeout(finish, audioEl.duration * 1000);
+        }
+        // Si duration pas encore connue, on attend uniquement l'événement ended
       });
     }
 
@@ -177,8 +167,16 @@
       const t = estimatedTiming;
       const startTime = performance.now();
 
-      // Progress bar basée sur la durée estimée
-      const estimatedTotal = t.introDuration + t.questionDuration + t.answerDuration + t.explanationDuration + t.outroDuration;
+      // Progress bar — durées réelles lues sur les éléments audio, jamais sur le JSON
+      const qDur = document.getElementById('audioQuestion').duration;
+      const aDur = document.getElementById('audioAnswer').duration;
+      const eDur = document.getElementById('audioExplication').duration;
+      const estimatedTotal = t.introDuration
+        + (isFinite(qDur) ? qDur : 0)
+        + t.countdownDuration
+        + (isFinite(aDur) ? aDur : t.answerDuration)
+        + (isFinite(eDur) ? eDur : 0)
+        + t.outroDuration;
       const pbStyle = document.createElement('style');
       pbStyle.textContent = `@keyframes progress { from{width:0} to{width:100%} }`;
       document.head.appendChild(pbStyle);
@@ -192,8 +190,11 @@
       playAudio('audioBgMusic');
       playAudio('audioIntro');
 
-      // Transition après la fin RÉELLE de l'audio intro (pas de timer fixe)
-      await waitForAudio(document.getElementById('audioIntro'), t.introDuration);
+      // Durée fixe 3s, puis on coupe l'audio avant de passer à la question
+      await wait(t.introDuration * 1000);
+      const introAudioEl = document.getElementById('audioIntro');
+      introAudioEl.pause();
+      introAudioEl.currentTime = 0;
       hideSeq(introEl);
 
       // ══ QUESTION ══
@@ -213,9 +214,8 @@
       await wait(1700);
       playAudio('audioQuestion');
 
-      // ── Countdown : attend la fin RÉELLE de l'audio question ──
-      await waitForAudio(document.getElementById('audioQuestion'), video.question.audioDuration || 5);
-      await wait(400); // léger buffer
+      // ── Countdown : démarre à la fin réelle de audioQuestion (audioEl.duration, jamais audioDuration JSON) ──
+      await waitForAudio(document.getElementById('audioQuestion'));
 
       const cdOverlay   = document.getElementById('countdownOverlay');
       const cdValue     = document.getElementById('countdownValue');
@@ -257,6 +257,12 @@
 
       cdOverlay.classList.remove('visible');
       hideSeq(questionEl);
+      const _aqStop = document.getElementById('audioQuestion');
+      _aqStop.pause();
+      _aqStop.currentTime = 0;
+      const _suspenseStop = document.getElementById('audioSuspense');
+      _suspenseStop.pause();
+      _suspenseStop.currentTime = 0;
 
       // ══ RÉPONSE — déclenchée dynamiquement après le dernier tick ══
       const answerEl = document.getElementById('answer');
@@ -267,7 +273,7 @@
       document.getElementById('answerText').style.animation = 'shakeIn 0.6s ease forwards';
       playAudio('audioAnswer');
 
-      await wait(t.answerDuration * 1000);
+      await waitForAudio(document.getElementById('audioAnswer'));
       hideSeq(answerEl);
 
       // ══ EXPLICATION ══
@@ -285,20 +291,21 @@
 
       // Points animés progressivement pendant l'audio explication
       const points = document.querySelectorAll('#explanationPoints .point');
-      const eAudioDur = video.explication.audioDuration || 12;
-      const pointInterval = (eAudioDur - 1) / Math.max(points.length, 1);
+      const expAudioEl = document.getElementById('audioExplication');
+      // Durée réelle détectée par le browser — jamais audioDuration du JSON
+      const eRealDur = (expAudioEl.duration && isFinite(expAudioEl.duration)) ? expAudioEl.duration : 12;
+      const pointInterval = (eRealDur - 1) / Math.max(points.length, 1);
       points.forEach((p, i) => {
         setTimeout(() => { p.style.animation = 'slideRight 0.8s ease forwards'; }, i * pointInterval * 1000);
       });
 
-      // ── Outro : attend la fin RÉELLE de l'audio explication ──
-      await waitForAudio(document.getElementById('audioExplication'), eAudioDur);
+      // Badge et source lancés pendant l'audio (vers la fin), pas après
+      const badgeDelay = Math.max((eRealDur - 2) * 1000, points.length * pointInterval * 1000 + 500);
+      setTimeout(() => { document.getElementById('infoBadge').style.animation = 'bounceIn 0.6s ease forwards'; }, badgeDelay);
+      setTimeout(() => { document.getElementById('sourceText').style.animation = 'fadeIn 0.5s ease forwards'; }, badgeDelay + 600);
 
-      // Badge et source après l'audio
-      document.getElementById('infoBadge').style.animation = 'bounceIn 0.6s ease forwards';
-      setTimeout(() => { document.getElementById('sourceText').style.animation = 'fadeIn 0.5s ease forwards'; }, 600);
-
-      await wait(1500);
+      // ── Outro : démarre dès la fin réelle de explication.mp3 (audioEl.duration, jamais audioDuration JSON) ──
+      await waitForAudio(expAudioEl);
       hideSeq(explanationEl);
 
       // ══ OUTRO ══

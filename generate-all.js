@@ -41,8 +41,8 @@ function getResolution(format) {
 }
 
 const CONFIG = {
-  templateFile: path.join(__dirname, 'template.html'),
-  dataFile: path.join(__dirname, 'videos-data.json'),
+  templateFile: path.join(__dirname, 'engine', 'template.html'),
+  dataFile: path.join(__dirname, 'data', 'videos-data.json'),
   outputDir: path.join(__dirname, 'output'),
   framesDir: path.join(__dirname, 'output', 'frames'),
   width: 1080,
@@ -81,7 +81,10 @@ function generateHTML() {
       .replace(/\.\/assets\//g, '../assets/')
       .replace(/<\/script>/gi, '<\\/script>');
     const dataScript = `<script>window.__VIDEO_DATA = ${payloadStr};</script>`;
-    const html = template.replace('</head>', `${dataScript}\n</head>`);
+    let html = template
+      .replace('href="style.css"', 'href="../engine/style.css"')
+      .replace('src="script.js"', 'src="../engine/script.js"')
+      .replace('</head>', `${dataScript}\n</head>`);
 
     fs.writeFileSync(filepath, html, 'utf-8');
 
