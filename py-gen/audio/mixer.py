@@ -60,6 +60,8 @@ def build_audio(video_data, settings, countdown_dur):
     outro_path   = abs_path(s["outro"])
     bg_path      = abs_path(s["backgroundMusic"])
     bg_vol       = float(s.get("backgroundMusicVolume", 0.15))
+    intro_vol    = float(s.get("introVolume", 1.0))
+    outro_vol    = float(s.get("outroVolume", 1.0))
 
     q_path  = abs_path(video_data["question"]["audio"])
     e_path  = abs_path(video_data["explication"]["audio"])
@@ -100,7 +102,10 @@ def build_audio(video_data, settings, countdown_dur):
             clips.append(c)
 
     if os.path.exists(intro_path):
-        clips.append(AudioFileClip(intro_path).subclip(0, intro_dur).set_start(t0))
+        clips.append(_vol(
+            AudioFileClip(intro_path).subclip(0, intro_dur).set_start(t0),
+            intro_vol,
+        ))
     add(q_path, t1)
 
     if os.path.exists(tick_path):
@@ -113,7 +118,10 @@ def build_audio(video_data, settings, countdown_dur):
     add(correct_path if not is_faux else wrong_path, t_ans)
     add(e_path,  t_expl)
     if os.path.exists(outro_path):
-        clips.append(AudioFileClip(outro_path).subclip(0, outro_dur).set_start(t_outro))
+        clips.append(_vol(
+            AudioFileClip(outro_path).subclip(0, outro_dur).set_start(t_outro),
+            outro_vol,
+        ))
 
     composite = CompositeAudioClip(clips).set_duration(total)
     return composite, total, {

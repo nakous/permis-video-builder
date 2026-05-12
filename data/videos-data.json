@@ -15,16 +15,30 @@
       "wrong": "./assets/sounds/wrong.mp3",
       "outro": "./assets/sounds/outro.mp3",
       "backgroundMusic": "./assets/sounds/bg-music.mp3",
-      "backgroundMusicVolume": 0.15
+      "backgroundMusicVolume": 0.15,
+      "introVolume": 0.6,
+      "outroVolume": 0.6
     },
     "theme": {
       "primaryColor": "#2ECBA1",
       "secondaryColor": "#F59E0B",
       "backgroundColor": "#0D1B2A",
-      "accentGradient": ["#2ECBA1", "#14C9C4"],
-      "dangerGradient": ["#EF4444", "#DC2626"],
-      "successGradient": ["#2ECBA1", "#059669"],
-      "warningGradient": ["#F59E0B", "#D97706"],
+      "accentGradient": [
+        "#2ECBA1",
+        "#14C9C4"
+      ],
+      "dangerGradient": [
+        "#EF4444",
+        "#DC2626"
+      ],
+      "successGradient": [
+        "#2ECBA1",
+        "#059669"
+      ],
+      "warningGradient": [
+        "#F59E0B",
+        "#D97706"
+      ],
       "fontFamily": "Roboto"
     },
     "socials": {
@@ -49,8 +63,14 @@
         "type": "qcm",
         "texte": "Dans cette situation, la vitesse maximale autorisée pour un conducteur en délai probatoire est de :",
         "choix": [
-          { "lettre": "A", "texte": "80 km/h" },
-          { "lettre": "B", "texte": "90 km/h" }
+          {
+            "lettre": "A",
+            "texte": "80 km/h"
+          },
+          {
+            "lettre": "B",
+            "texte": "90 km/h"
+          }
         ],
         "media": "./assets/videos/q1/question.png",
         "mediaType": "image",
@@ -63,14 +83,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q1/explication.mp3",
         "points": [
-          { "texte": "Le conducteur en période probatoire est limité à 80 km/h sur route" },
-          { "texte": "Sur autoroute : 110 km/h au lieu de 130 km/h" },
-          { "texte": "En cas d'infraction : retrait de points accéléré" },
-          { "texte": "La limite s'applique pendant 3 ans (permis classique)" }
+          {
+            "texte": "Le conducteur en période probatoire est limité à 80 km/h sur route"
+          },
+          {
+            "texte": "Sur autoroute : 110 km/h au lieu de 130 km/h"
+          },
+          {
+            "texte": "En cas d'infraction : retrait de points accéléré"
+          },
+          {
+            "texte": "La limite s'applique pendant 3 ans (permis classique)"
+          }
         ],
-        "badge": { "texte": "80 km/h maxi - 3 ans", "type": "warning" }
+        "badge": {
+          "texte": "80 km/h maxi - 3 ans",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 2,
@@ -81,9 +116,18 @@
         "type": "qcm",
         "texte": "",
         "choix": [
-          { "lettre": "A", "texte": "Je klaxonne" },
-          { "lettre": "B", "texte": "Je m'arrête" },
-          { "lettre": "C", "texte": "J'accélère" }
+          {
+            "lettre": "A",
+            "texte": "Je klaxonne"
+          },
+          {
+            "lettre": "B",
+            "texte": "Je m'arrête"
+          },
+          {
+            "lettre": "C",
+            "texte": "J'accélère"
+          }
         ],
         "media": "./assets/videos/q2/question.png",
         "mediaType": "image",
@@ -96,14 +140,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q2/explication.mp3",
         "points": [
-          { "texte": "Un piéton qui manifeste l'intention de traverser est prioritaire" },
-          { "texte": "Le conducteur doit toujours s'arrêter pour le laisser passer" },
-          { "texte": "Klaxonner ou accélérer est dangereux et interdit" },
-          { "texte": "Refus de priorité piéton : -6 points + 135€ d'amende" }
+          {
+            "texte": "Un piéton qui manifeste l'intention de traverser est prioritaire"
+          },
+          {
+            "texte": "Le conducteur doit toujours s'arrêter pour le laisser passer"
+          },
+          {
+            "texte": "Klaxonner ou accélérer est dangereux et interdit"
+          },
+          {
+            "texte": "Refus de priorité piéton : -6 points + 135€ d'amende"
+          }
         ],
-        "badge": { "texte": "-6 pts + 135€", "type": "danger" }
+        "badge": {
+          "texte": "-6 pts + 135€",
+          "type": "danger"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 3,
@@ -114,8 +173,14 @@
         "type": "qcm",
         "texte": "Le feu est éteint, je cède le passage aux usagers venant de droite :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q3/question.png",
         "mediaType": "image",
@@ -128,14 +193,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q3/explication.mp3",
         "points": [
-          { "texte": "Un feu tricolore en panne devient inactif" },
-          { "texte": "Sans autre signalisation, la priorité à droite s'applique" },
-          { "texte": "Ralentissez à l'approche de chaque carrefour" },
-          { "texte": "Non-respect priorité droite : -4 points + 135€" }
+          {
+            "texte": "Un feu tricolore en panne devient inactif"
+          },
+          {
+            "texte": "Sans autre signalisation, la priorité à droite s'applique"
+          },
+          {
+            "texte": "Ralentissez à l'approche de chaque carrefour"
+          },
+          {
+            "texte": "Non-respect priorité droite : -4 points + 135€"
+          }
         ],
-        "badge": { "texte": "Priorité à droite", "type": "warning" }
+        "badge": {
+          "texte": "Priorité à droite",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 4,
@@ -146,8 +226,14 @@
         "type": "qcm",
         "texte": "La signalisation annonce une succession de virages dangereux dont le premier sera à :",
         "choix": [
-          { "lettre": "A", "texte": "droite" },
-          { "lettre": "B", "texte": "gauche" }
+          {
+            "lettre": "A",
+            "texte": "droite"
+          },
+          {
+            "lettre": "B",
+            "texte": "gauche"
+          }
         ],
         "media": "./assets/videos/q4/question.png",
         "mediaType": "image",
@@ -160,14 +246,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q4/explication.mp3",
         "points": [
-          { "texte": "Le panneau A1 indique une succession de virages dangereux" },
-          { "texte": "La forme du panneau montre le sens du premier virage" },
-          { "texte": "Adaptez votre vitesse AVANT d'entrer en virage" },
-          { "texte": "Ne dépassez jamais en virage" }
+          {
+            "texte": "Le panneau A1 indique une succession de virages dangereux"
+          },
+          {
+            "texte": "La forme du panneau montre le sens du premier virage"
+          },
+          {
+            "texte": "Adaptez votre vitesse AVANT d'entrer en virage"
+          },
+          {
+            "texte": "Ne dépassez jamais en virage"
+          }
         ],
-        "badge": { "texte": "Adapter la vitesse", "type": "warning" }
+        "badge": {
+          "texte": "Adapter la vitesse",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 5,
@@ -178,8 +279,14 @@
         "type": "qcm",
         "texte": "Je sors de l'autoroute à la prochaine sortie, je dépasse :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q5/question.png",
         "mediaType": "image",
@@ -192,14 +299,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q5/explication.mp3",
         "points": [
-          { "texte": "Avant une sortie, restez sur la voie de droite" },
-          { "texte": "Un dépassement ferait manquer la sortie" },
-          { "texte": "Anticipez avec le clignotant droit 100 m avant" },
-          { "texte": "Surveillez les angles morts avant tout changement" }
+          {
+            "texte": "Avant une sortie, restez sur la voie de droite"
+          },
+          {
+            "texte": "Un dépassement ferait manquer la sortie"
+          },
+          {
+            "texte": "Anticipez avec le clignotant droit 100 m avant"
+          },
+          {
+            "texte": "Surveillez les angles morts avant tout changement"
+          }
         ],
-        "badge": { "texte": "Anticiper la sortie", "type": "warning" }
+        "badge": {
+          "texte": "Anticiper la sortie",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 6,
@@ -210,8 +332,14 @@
         "type": "qcm",
         "texte": "L'absence de visibilité à travers ce véhicule impose d'augmenter l'intervalle de sécurité :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q6/question.png",
         "mediaType": "image",
@@ -224,14 +352,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q6/explication.mp3",
         "points": [
-          { "texte": "Un poids lourd masque la visibilité vers l'avant" },
-          { "texte": "Augmentez la distance pour mieux anticiper" },
-          { "texte": "Vous êtes invisible dans son rétro si trop proche" },
-          { "texte": "Règle des 2 secondes minimum, plus derrière un PL" }
+          {
+            "texte": "Un poids lourd masque la visibilité vers l'avant"
+          },
+          {
+            "texte": "Augmentez la distance pour mieux anticiper"
+          },
+          {
+            "texte": "Vous êtes invisible dans son rétro si trop proche"
+          },
+          {
+            "texte": "Règle des 2 secondes minimum, plus derrière un PL"
+          }
         ],
-        "badge": { "texte": "Distance x2 derrière PL", "type": "warning" }
+        "badge": {
+          "texte": "Distance x2 derrière PL",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 7,
@@ -242,9 +385,18 @@
         "type": "qcm",
         "texte": "",
         "choix": [
-          { "lettre": "A", "texte": "Je freine" },
-          { "lettre": "B", "texte": "Je dépasse" },
-          { "lettre": "C", "texte": "Je klaxonne" }
+          {
+            "lettre": "A",
+            "texte": "Je freine"
+          },
+          {
+            "lettre": "B",
+            "texte": "Je dépasse"
+          },
+          {
+            "lettre": "C",
+            "texte": "Je klaxonne"
+          }
         ],
         "media": "./assets/videos/q7/question.png",
         "mediaType": "image",
@@ -257,14 +409,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q7/explication.mp3",
         "points": [
-          { "texte": "Le panneau de danger annonce une zone à risque" },
-          { "texte": "Les feux orange signalent un véhicule lent ou arrêté" },
-          { "texte": "Ralentir est la seule option sûre" },
-          { "texte": "Préparez-vous à un arrêt complet si nécessaire" }
+          {
+            "texte": "Le panneau de danger annonce une zone à risque"
+          },
+          {
+            "texte": "Les feux orange signalent un véhicule lent ou arrêté"
+          },
+          {
+            "texte": "Ralentir est la seule option sûre"
+          },
+          {
+            "texte": "Préparez-vous à un arrêt complet si nécessaire"
+          }
         ],
-        "badge": { "texte": "Ralentir obligatoire", "type": "warning" }
+        "badge": {
+          "texte": "Ralentir obligatoire",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 8,
@@ -275,8 +442,14 @@
         "type": "qcm",
         "texte": "Lors du dépassement de la caravane, je risque de faire un écart de trajectoire :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q8/question.png",
         "mediaType": "image",
@@ -289,14 +462,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q8/explication.mp3",
         "points": [
-          { "texte": "La manche à air indique la force et direction du vent" },
-          { "texte": "Un véhicule haut crée des turbulences au dépassement" },
-          { "texte": "Tenez fermement le volant pendant la manœuvre" },
-          { "texte": "Anticipez les bourrasques à la sortie du dépassement" }
+          {
+            "texte": "La manche à air indique la force et direction du vent"
+          },
+          {
+            "texte": "Un véhicule haut crée des turbulences au dépassement"
+          },
+          {
+            "texte": "Tenez fermement le volant pendant la manœuvre"
+          },
+          {
+            "texte": "Anticipez les bourrasques à la sortie du dépassement"
+          }
         ],
-        "badge": { "texte": "Tenir fermement le volant", "type": "warning" }
+        "badge": {
+          "texte": "Tenir fermement le volant",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 9,
@@ -307,8 +495,14 @@
         "type": "qcm",
         "texte": "J'utilise de préférence en agglomération la nuit :",
         "choix": [
-          { "lettre": "A", "texte": "les feux de position seuls" },
-          { "lettre": "B", "texte": "les feux de croisement" }
+          {
+            "lettre": "A",
+            "texte": "les feux de position seuls"
+          },
+          {
+            "lettre": "B",
+            "texte": "les feux de croisement"
+          }
         ],
         "media": "./assets/videos/q9/question.png",
         "mediaType": "image",
@@ -321,14 +515,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q9/explication.mp3",
         "points": [
-          { "texte": "Les feux de position seuls sont insuffisants pour voir" },
-          { "texte": "Les feux de croisement sont obligatoires de nuit" },
-          { "texte": "Permettent de mieux voir ET d'être vu" },
-          { "texte": "Pas d'éblouissement des autres conducteurs" }
+          {
+            "texte": "Les feux de position seuls sont insuffisants pour voir"
+          },
+          {
+            "texte": "Les feux de croisement sont obligatoires de nuit"
+          },
+          {
+            "texte": "Permettent de mieux voir ET d'être vu"
+          },
+          {
+            "texte": "Pas d'éblouissement des autres conducteurs"
+          }
         ],
-        "badge": { "texte": "Voir et être vu", "type": "success" }
+        "badge": {
+          "texte": "Voir et être vu",
+          "type": "success"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 10,
@@ -339,8 +548,14 @@
         "type": "qcm",
         "texte": "La chaussée présente des risques d'aquaplanage :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q10/question.png",
         "mediaType": "image",
@@ -353,14 +568,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q10/explication.mp3",
         "points": [
-          { "texte": "L'aquaplanage survient sur chaussée mouillée" },
-          { "texte": "Les pneus perdent l'adhérence sur le film d'eau" },
-          { "texte": "Réduisez la vitesse de 20 km/h sous la pluie" },
-          { "texte": "Augmentez vos distances de sécurité" }
+          {
+            "texte": "L'aquaplanage survient sur chaussée mouillée"
+          },
+          {
+            "texte": "Les pneus perdent l'adhérence sur le film d'eau"
+          },
+          {
+            "texte": "Réduisez la vitesse de 20 km/h sous la pluie"
+          },
+          {
+            "texte": "Augmentez vos distances de sécurité"
+          }
         ],
-        "badge": { "texte": "Réduire vitesse -20 km/h", "type": "warning" }
+        "badge": {
+          "texte": "Réduire vitesse -20 km/h",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 11,
@@ -371,8 +601,14 @@
         "type": "qcm",
         "texte": "Des piétons sont susceptibles d'être sur la chaussée :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q11/question.jpg",
         "mediaType": "image",
@@ -385,14 +621,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q11/explication.mp3",
         "points": [
-          { "texte": "Véhicule d'intervention sur BAU = agents sur la chaussée" },
-          { "texte": "Ralentissez et écartez-vous au maximum" },
-          { "texte": "Corridor de sécurité obligatoire depuis 2018" },
-          { "texte": "Non-respect : -4 points + 135€ d'amende" }
+          {
+            "texte": "Véhicule d'intervention sur BAU = agents sur la chaussée"
+          },
+          {
+            "texte": "Ralentissez et écartez-vous au maximum"
+          },
+          {
+            "texte": "Corridor de sécurité obligatoire depuis 2018"
+          },
+          {
+            "texte": "Non-respect : -4 points + 135€ d'amende"
+          }
         ],
-        "badge": { "texte": "Corridor de sécurité", "type": "danger" }
+        "badge": {
+          "texte": "Corridor de sécurité",
+          "type": "danger"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 12,
@@ -403,8 +654,14 @@
         "type": "qcm",
         "texte": "Pour baliser un accident sur la route, je place un triangle de sécurité à environ :",
         "choix": [
-          { "lettre": "A", "texte": "30 m" },
-          { "lettre": "B", "texte": "100 m" }
+          {
+            "lettre": "A",
+            "texte": "30 m"
+          },
+          {
+            "lettre": "B",
+            "texte": "100 m"
+          }
         ],
         "media": "./assets/videos/q12/question.png",
         "mediaType": "image",
@@ -417,14 +674,29 @@
         "mediaType": "image",
         "audio": "./assets/videos/q12/explication.mp3",
         "points": [
-          { "texte": "Distance minimale : 30 m derrière le véhicule" },
-          { "texte": "Plus loin en sortie de virage ou sommet de côte" },
-          { "texte": "Portez le gilet jaune avant de sortir du véhicule" },
-          { "texte": "Triangle + gilet : obligation légale" }
+          {
+            "texte": "Distance minimale : 30 m derrière le véhicule"
+          },
+          {
+            "texte": "Plus loin en sortie de virage ou sommet de côte"
+          },
+          {
+            "texte": "Portez le gilet jaune avant de sortir du véhicule"
+          },
+          {
+            "texte": "Triangle + gilet : obligation légale"
+          }
         ],
-        "badge": { "texte": "30 m + gilet jaune", "type": "warning" }
+        "badge": {
+          "texte": "30 m + gilet jaune",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     },
     {
       "id": 13,
@@ -435,8 +707,14 @@
         "type": "qcm",
         "texte": "Lors du remplacement d'un pneumatique, je tiens compte des caractéristiques préconisées par le constructeur du véhicule :",
         "choix": [
-          { "lettre": "A", "texte": "OUI" },
-          { "lettre": "B", "texte": "NON" }
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
         ],
         "media": "./assets/videos/q13/question.png",
         "mediaType": "image",
@@ -449,14 +727,632 @@
         "mediaType": "image",
         "audio": "./assets/videos/q13/explication.mp3",
         "points": [
-          { "texte": "Dimensions, indice de charge et vitesse à respecter" },
-          { "texte": "Sur un même essieu : pneus identiques obligatoires" },
-          { "texte": "Niveau d'usure équilibré entre les 2 pneus" },
-          { "texte": "Pneus non conformes : amende + danger en conduite" }
+          {
+            "texte": "Dimensions, indice de charge et vitesse à respecter"
+          },
+          {
+            "texte": "Sur un même essieu : pneus identiques obligatoires"
+          },
+          {
+            "texte": "Niveau d'usure équilibré entre les 2 pneus"
+          },
+          {
+            "texte": "Pneus non conformes : amende + danger en conduite"
+          }
         ],
-        "badge": { "texte": "Pneus identiques par essieu", "type": "warning" }
+        "badge": {
+          "texte": "Pneus identiques par essieu",
+          "type": "warning"
+        }
       },
-      "timing": { "introDuration": 4, "countdownDuration": 3, "outroDuration": 4 }
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 14,
+      "sujet": "Rôle de l'ABS",
+      "categorie": "Mécanique",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "L'ABS (système anti-blocage des roues) permet :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "De réduire considérablement la distance de freinage"
+          },
+          {
+            "lettre": "B",
+            "texte": "De conserver la maîtrise de la direction"
+          }
+        ],
+        "media": "./assets/videos/q14/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q14/question.mp3"
+      },
+      "reponse": "B - De conserver la maîtrise de la direction",
+      "explication": {
+        "titre": "ABS → maîtrise de la direction",
+        "media": "./assets/videos/q14/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q14/explication.mp3",
+        "points": [
+          {
+            "texte": "L'ABS empêche les roues de se bloquer au freinage"
+          },
+          {
+            "texte": "Le conducteur peut continuer à diriger pendant le freinage d'urgence"
+          },
+          {
+            "texte": "Il ne réduit pas forcément la distance d'arrêt"
+          },
+          {
+            "texte": "ABS = sécurité directionnelle, pas distance"
+          }
+        ],
+        "badge": {
+          "texte": "Sécurité de freinage",
+          "type": "success"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 15,
+      "sujet": "Feux brouillard sous la pluie",
+      "categorie": "Signalisation",
+      "difficulty": "facile",
+      "question": {
+        "type": "vrai_faux",
+        "texte": "Par temps de pluie forte, j'ai le droit d'allumer mes feux de brouillard ARRIÈRE.",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "Vrai"
+          },
+          {
+            "lettre": "B",
+            "texte": "Faux"
+          }
+        ],
+        "media": "./assets/videos/q15/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q15/question.mp3"
+      },
+      "reponse": "B - Faux",
+      "explication": {
+        "titre": "Feux brouillard AR : interdits sous la pluie",
+        "media": "./assets/videos/q15/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q15/explication.mp3",
+        "points": [
+          {
+            "texte": "Les feux de brouillard AR sont éblouissants pour ceux qui suivent"
+          },
+          {
+            "texte": "Ils ne s'utilisent qu'en cas de brouillard ou de chute de neige"
+          },
+          {
+            "texte": "Jamais sous la pluie, même forte"
+          },
+          {
+            "texte": "Usage abusif : 35€ d'amende"
+          }
+        ],
+        "badge": {
+          "texte": "Brouillard ou neige seulement",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 16,
+      "sujet": "Feux dans un tunnel",
+      "categorie": "Signalisation",
+      "difficulty": "moyen",
+      "question": {
+        "type": "vrai_faux",
+        "texte": "Les feux diurnes sont suffisants pour circuler dans ce tunnel :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
+        ],
+        "media": "./assets/videos/q16/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q16/question.mp3"
+      },
+      "reponse": "B - NON",
+      "explication": {
+        "titre": "Tunnel → feux de croisement obligatoires",
+        "media": "./assets/videos/q16/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q16/explication.mp3",
+        "points": [
+          {
+            "texte": "Les feux diurnes sont peu visibles dans un tunnel éclairé"
+          },
+          {
+            "texte": "Les feux de croisement signalent mieux votre position et vitesse"
+          },
+          {
+            "texte": "Ils facilitent la lecture par les autres usagers"
+          },
+          {
+            "texte": "Obligation : feux de croisement, même en tunnel éclairé"
+          }
+        ],
+        "badge": {
+          "texte": "Feux croisement obligatoires",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 17,
+      "sujet": "Commande désembuage AR",
+      "categorie": "Mécanique",
+      "difficulty": "difficile",
+      "question": {
+        "type": "qcm",
+        "texte": "J'utilise cette commande pour activer :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "le recyclage de l'air dans l'habitacle"
+          },
+          {
+            "lettre": "B",
+            "texte": "le désembuage de la lunette arrière"
+          },
+          {
+            "lettre": "C",
+            "texte": "les essuie-glaces"
+          }
+        ],
+        "media": "./assets/videos/q17/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q17/question.mp3"
+      },
+      "reponse": "B - le désembuage de la lunette arrière",
+      "explication": {
+        "titre": "Désembuage de la lunette arrière",
+        "media": "./assets/videos/q17/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q17/explication.mp3",
+        "points": [
+          {
+            "texte": "Les pictos avec résistances signalent un système de chauffage"
+          },
+          {
+            "texte": "Le picto reprend la forme de la lunette arrière"
+          },
+          {
+            "texte": "Recyclage d'air et essuie-glaces ont des pictos différents"
+          },
+          {
+            "texte": "Bien identifier les commandes évite les erreurs en conduite"
+          }
+        ],
+        "badge": {
+          "texte": "Identifier les pictos",
+          "type": "success"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 18,
+      "sujet": "Balise obstacle",
+      "categorie": "Signalisation",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Cette balise signale :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "des travaux"
+          },
+          {
+            "lettre": "B",
+            "texte": "un passage à niveau à 150 m"
+          },
+          {
+            "lettre": "C",
+            "texte": "un obstacle proche de la chaussée"
+          }
+        ],
+        "media": "./assets/videos/q18/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q18/question.mp3"
+      },
+      "reponse": "C - un obstacle proche de la chaussée",
+      "explication": {
+        "titre": "Balise → obstacle proche de la chaussée",
+        "media": "./assets/videos/q18/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q18/explication.mp3",
+        "points": [
+          {
+            "texte": "Cette balise signale un obstacle proche de la chaussée"
+          },
+          {
+            "texte": "Très visible par intempéries et de nuit"
+          },
+          {
+            "texte": "À ne pas confondre avec passage à niveau (150m) ou travaux"
+          },
+          {
+            "texte": "Ralentir et anticiper l'obstacle signalé"
+          }
+        ],
+        "badge": {
+          "texte": "Obstacle proche",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 19,
+      "sujet": "Reprendre la voiture d'un ami",
+      "categorie": "Sécurité",
+      "difficulty": "facile",
+      "question": {
+        "type": "qcm",
+        "texte": "Je reprends la voiture d'un ami de même corpulence :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "je pars directement"
+          },
+          {
+            "lettre": "B",
+            "texte": "je vérifie tous les réglages"
+          },
+          {
+            "lettre": "C",
+            "texte": "je règle seulement les rétros"
+          },
+          {
+            "lettre": "D",
+            "texte": "je règle seulement le siège"
+          }
+        ],
+        "media": "./assets/videos/q19/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q19/question.mp3"
+      },
+      "reponse": "B - je vérifie tous les réglages",
+      "explication": {
+        "titre": "Toujours vérifier tous les réglages",
+        "media": "./assets/videos/q19/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q19/explication.mp3",
+        "points": [
+          {
+            "texte": "Même à corpulence égale, les morphologies diffèrent"
+          },
+          {
+            "texte": "Bras, jambes, mains, pieds peuvent être plus longs ou courts"
+          },
+          {
+            "texte": "Vérifier siège, dossier, rétros, volant et appui-tête"
+          },
+          {
+            "texte": "Mauvaise position = perte de contrôle en cas d'urgence"
+          }
+        ],
+        "badge": {
+          "texte": "Vérifier tous les réglages",
+          "type": "success"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 20,
+      "sujet": "Ligne discontinue + piéton",
+      "categorie": "Conduite",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Ce conducteur doit s'arrêter à hauteur de la ligne discontinue :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "lorsqu'un piéton souhaite s'engager sur le passage pour piétons"
+          },
+          {
+            "lettre": "B",
+            "texte": "même si aucun piéton n'est présent"
+          }
+        ],
+        "media": "./assets/videos/q20/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q20/question.mp3"
+      },
+      "reponse": "A - lorsqu'un piéton souhaite s'engager sur le passage pour piétons",
+      "explication": {
+        "titre": "Arrêt SI un piéton s'engage",
+        "media": "./assets/videos/q20/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q20/explication.mp3",
+        "points": [
+          {
+            "texte": "Cette ligne renforce la protection des piétons"
+          },
+          {
+            "texte": "Arrêt obligatoire si un piéton s'engage ou cherche à s'engager"
+          },
+          {
+            "texte": "Pas d'arrêt requis si aucun piéton n'est présent"
+          },
+          {
+            "texte": "Toujours rester vigilant avant un passage piéton"
+          }
+        ],
+        "badge": {
+          "texte": "Priorité piéton engagé",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 21,
+      "sujet": "Feu jaune clignotant",
+      "categorie": "Signalisation",
+      "difficulty": "difficile",
+      "question": {
+        "type": "qcm",
+        "texte": "Le feu jaune clignote, je passe :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "Je passe en cédant le passage à droite"
+          },
+          {
+            "lettre": "B",
+            "texte": "je m'arrête"
+          }
+        ],
+        "media": "./assets/videos/q21/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q21/question.mp3"
+      },
+      "reponse": "A - Je passe en cédant le passage à droite",
+      "explication": {
+        "titre": "Feu jaune clignotant → priorité à droite",
+        "media": "./assets/videos/q21/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q21/explication.mp3",
+        "points": [
+          {
+            "texte": "Feu jaune clignotant = feu hors service"
+          },
+          {
+            "texte": "Vérifier s'il y a un panneau de priorité sous le feu"
+          },
+          {
+            "texte": "Sans panneau de priorité : règle de la priorité à droite"
+          },
+          {
+            "texte": "Ici le panneau est une interdiction → céder le passage à droite"
+          }
+        ],
+        "badge": {
+          "texte": "Priorité à droite",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 22,
+      "sujet": "Chargement sur le toit",
+      "categorie": "Sécurité",
+      "difficulty": "moyen",
+      "question": {
+        "type": "qcm",
+        "texte": "Le chargement du véhicule ne doit pas dépasser :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "de + de 1 mètre à l'avant"
+          },
+          {
+            "lettre": "B",
+            "texte": "de + de 2 mètres à l’arrière"
+          },
+          {
+            "lettre": "C",
+            "texte": "de + de 3 mètres à l’arrière"
+          }
+        ],
+        "media": "./assets/videos/q22/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q22/question.mp3"
+      },
+      "reponse": "C - de + de 3 mètres à l’arrière",
+      "explication": {
+        "titre": "Chargement : 3 m max à l'arrière",
+        "media": "./assets/videos/q22/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q22/explication.mp3",
+        "points": [
+          {
+            "texte": "Le chargement ne doit jamais dépasser l'avant du véhicule"
+          },
+          {
+            "texte": "Maximum 3 m de dépassement à l'arrière"
+          },
+          {
+            "texte": "Au-delà de 1 m AR : dispositif réfléchissant obligatoire"
+          },
+          {
+            "texte": "La nuit : ajouter un feu rouge à l'extrémité"
+          }
+        ],
+        "badge": {
+          "texte": "3 m max arrière",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 23,
+      "sujet": "Ambulance et feu rouge",
+      "categorie": "Conduite",
+      "difficulty": "difficile",
+      "question": {
+        "type": "qcm",
+        "texte": "Une ambulance arrive, que faites-vous au feu rouge ?",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "Je m’arrête au feu"
+          },
+          {
+            "lettre": "B",
+            "texte": "je tourne à gauche"
+          }
+        ],
+        "media": "./assets/videos/q23/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q23/question.mp3"
+      },
+      "reponse": "A - Je m’arrête au feu",
+      "explication": {
+        "titre": "Au feu rouge → s'arrêter même si ambulance",
+        "media": "./assets/videos/q23/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q23/explication.mp3",
+        "points": [
+          {
+            "texte": "L'ambulance n'est pas prioritaire aux intersections"
+          },
+          {
+            "texte": "Elle ne peut pas franchir un feu rouge"
+          },
+          {
+            "texte": "Franchir le feu peut surprendre les autres usagers"
+          },
+          {
+            "texte": "Restez à l'arrêt et facilitez son passage ensuite"
+          }
+        ],
+        "badge": {
+          "texte": "Ambulance ≠ prioritaire",
+          "type": "warning"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
+    },
+    {
+      "id": 24,
+      "sujet": "Vélo en ville",
+      "categorie": "Sécurité",
+      "difficulty": "facile",
+      "question": {
+        "type": "vrai_faux",
+        "texte": "Sur de courts trajets en ville, je peux être plus rapide à vélo qu'en voiture :",
+        "choix": [
+          {
+            "lettre": "A",
+            "texte": "OUI"
+          },
+          {
+            "lettre": "B",
+            "texte": "NON"
+          }
+        ],
+        "media": "./assets/videos/q24/question.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q24/question.mp3"
+      },
+      "reponse": "A - OUI",
+      "explication": {
+        "titre": "Vélo : souvent plus rapide en ville",
+        "media": "./assets/videos/q24/explication.png",
+        "mediaType": "image",
+        "audio": "./assets/videos/q24/explication.mp3",
+        "points": [
+          {
+            "texte": "Sur courts trajets, le vélo peut battre la voiture en ville"
+          },
+          {
+            "texte": "Gain de temps et d'argent (carburant, parking)"
+          },
+          {
+            "texte": "Bénéfique pour la santé et l'environnement"
+          },
+          {
+            "texte": "Approche éco-citoyenne du déplacement"
+          }
+        ],
+        "badge": {
+          "texte": "Mobilité douce",
+          "type": "success"
+        }
+      },
+      "timing": {
+        "introDuration": 4,
+        "countdownDuration": 3,
+        "outroDuration": 4
+      }
     }
   ]
 }

@@ -220,3 +220,28 @@ def font_path(weight="Regular"):
     if not FONTS:
         load_fonts()
     return FONTS.get(weight, FONTS.get("Regular"))
+
+
+# ── Fallback font for glyphs missing in Roboto (arrows, ✓, ✗, etc.) ─────────
+_FALLBACK_CANDIDATES = [
+    r"C:\Windows\Fonts\seguisym.ttf",   # Segoe UI Symbol — best coverage on Win
+    r"C:\Windows\Fonts\seguiemj.ttf",   # Segoe UI Emoji — fallback of fallback
+    r"C:\Windows\Fonts\arial.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    "/System/Library/Fonts/Helvetica.ttc",
+]
+
+_FALLBACK_PATH = None
+
+
+def fallback_font_path():
+    """Path to a font with broad symbol coverage (arrows, checkmarks, …)."""
+    global _FALLBACK_PATH
+    if _FALLBACK_PATH is not None:
+        return _FALLBACK_PATH
+    for p in _FALLBACK_CANDIDATES:
+        if os.path.exists(p):
+            _FALLBACK_PATH = p
+            return p
+    _FALLBACK_PATH = font_path("Regular")  # last resort
+    return _FALLBACK_PATH
