@@ -163,11 +163,10 @@ py-gen/
 │   │
 │   ├── scenes/
 │   │   ├── intro.py         # Scène 1 : logo + nom site + catégorie
-│   │   ├── question.py      # Scène 2 : image question + texte + badge VRAI/FAUX
-│   │   ├── countdown.py     # Scène 3 : décompte 3-2-1 + ring SVG
-│   │   ├── answer.py        # Scène 4 : révélation VRAI / FAUX
-│   │   ├── explanation.py   # Scène 5 : image + points + badge
-│   │   └── outro.py         # Scène 6 : logo + réseaux sociaux + CTA
+│   │   ├── question.py      # Scène 2 : image + texte + choix + countdown widget intégré
+│   │   ├── answer.py        # Scène 3 : révélation VRAI / FAUX / lettre
+│   │   ├── explanation.py   # Scène 4 : image + points + badge
+│   │   └── outro.py         # Scène 5 : logo + réseaux sociaux + CTA
 │   │
 │   └── elements/
 │       ├── background.py    # Fonds : dégradés, overlay, vignette
@@ -253,17 +252,31 @@ Animation : logo scale 0→1 ease_out (0.4s) + texte fadeIn décalé
 Animation : image slideDown (0.5s) + card slideUp (0.3s décalé)
 ```
 
-### Scène 3 — COUNTDOWN (3 secondes fixes)
+### Scène 3 — COUNTDOWN — supprimée
+
+Le décompte n'est plus une scène dédiée. Pendant les 3 dernières secondes de
+la scène QUESTION, un widget circulaire (ring + chiffre) apparaît en bas-droite
+de l'image. La question et les choix restent visibles → le viewer peut réfléchir
+à sa réponse pendant le décompte.
+
 ```
 ┌─────────────────────────────┐
-│  [image question — grisée]  │  ← même image, overlay sombre 70%
-│                             │
-│          ┌──────┐           │
-│          │  3   │           │  ← ring SVG dessiné en Pillow, chiffre centré
-│          └──────┘           │     Nunito 900, 180px, couleur PRIMARY
-│       Répondez !            │  ← Nunito 700, TEXT_MUTED
+│  [image]                ┌──┐│  ← widget dans le coin bas-droit
+│                         │ 3 ││     ring R=78px, fond noir 70%
+│                         └──┘│     digit ExtraBold 92px PRIMARY_LIGHT
+│  [catégorie]                │
+│  [question card glass]      │
+│  [choix A/B/C]              │
 └─────────────────────────────┘
-Animation : ring se vide progressivement (stroke-dashoffset), chiffre pop scale
+Animations widget :
+  • Apparition (entry_dur=0.25s) : pop scale spring + alpha 0→1
+  • Pendant 3s : ring se vide (PRIMARY_DARK → PRIMARY_LIGHT par seconde)
+  • À chaque tick (sub_t < 0.12) : flash glow autour du ring
+  • Chiffre : pop spring 0.25s à chaque seconde, scale-out fade en fin
+  • Disparition (exit_dur=0.20s) : scale 1→1.3 + alpha 1→0
+
+Audio : 3 ticks démarrent à t = q_dur (fin question.mp3), espacés de 1s.
+Pipeline audio : voir mixer.py — clé `t_tick` dans le dict timings.
 ```
 
 ### Scène 4 — RÉPONSE (durée = audio correct/wrong)
@@ -325,12 +338,12 @@ Animation : logo fadeIn, card slideUp, réseaux slideRight décalés
 Tous les timings sont calculés dynamiquement à partir des durées réelles des MP3 :
 
 ```
-t=0                    intro.mp3 + bg-music (vol 0.15, loop)
-t=intro_end            question.mp3
-t=question_end         tick.mp3 × 3 (1s d'écart)
-t=countdown_end        correct.mp3 ou wrong.mp3
-t=answer_end           explication.mp3
-t=explication_end      outro.mp3
+t=0                            intro.mp3 + bg-music (vol 0.15, loop)
+t=intro_end                    question.mp3                       (scene QUESTION démarre)
+t=intro_end + q_dur            tick.mp3 × 3 (1s d'écart)          (toujours dans scene QUESTION)
+t=intro_end + q_dur + 3        correct.mp3 ou wrong.mp3           (scene ANSWER démarre)
+t=answer_end                   explication.mp3
+t=explication_end              outro.mp3
 ```
 
 `moviepy.CompositeAudioClip` assemble tout en 1 seul appel — pas de passes FFmpeg séparées.
@@ -373,8 +386,7 @@ opacity = interpolate(0, 1, elapsed, ease_out) if elapsed < 0.5 else 1
 
 ### Phase 3 — Scènes
 - [ ] `scenes/intro.py`
-- [ ] `scenes/question.py`
-- [ ] `scenes/countdown.py` — ring dessiné avec Pillow arcs
+- [ ] `scenes/question.py` — inclut le widget countdown bottom-right (phase tick)
 - [ ] `scenes/answer.py` — formes géométriques (pas d'emoji)
 - [ ] `scenes/explanation.py` — barre latérale colorée au lieu d'icônes
 - [ ] `scenes/outro.py`

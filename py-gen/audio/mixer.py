@@ -72,16 +72,18 @@ def build_audio(video_data, settings, countdown_dur):
     e_dur     = duration_of(e_path)
     a_dur     = duration_of(correct_path if not is_faux else wrong_path) or 2.0
 
-    t0  = 0.0
-    t1  = t0  + intro_dur            # question starts
-    t2  = t1  + q_dur                # countdown starts
-    t3  = t2  + countdown_dur        # answer starts
-    t4  = t3  + a_dur                # explication starts
+    # Question scene now contains the countdown ticks at its tail.
+    # There is no dedicated countdown scene any more.
+    t0       = 0.0
+    t1       = t0 + intro_dur                   # question scene starts
+    tick_t0  = t1 + q_dur                       # tick phase begins (still inside question scene)
+    t_ans    = tick_t0 + countdown_dur          # answer scene starts
+    t_expl   = t_ans + a_dur                    # explication starts
     outro_max = float(video_data.get("timing", {}).get("outroDuration", 4.0))
     outro_dur = min(duration_of(outro_path) or outro_max, outro_max)
 
-    t5    = t4 + e_dur               # outro starts
-    total = t5 + outro_dur
+    t_outro = t_expl + e_dur
+    total   = t_outro + outro_dur
 
     clips = []
 
@@ -99,30 +101,31 @@ def build_audio(video_data, settings, countdown_dur):
 
     if os.path.exists(intro_path):
         clips.append(AudioFileClip(intro_path).subclip(0, intro_dur).set_start(t0))
-    add(q_path,       t1)
+    add(q_path, t1)
 
     if os.path.exists(tick_path):
         tick_dur = min(1.0, duration_of(tick_path))
         for i in range(int(countdown_dur)):
             clips.append(
-                AudioFileClip(tick_path).subclip(0, tick_dur).set_start(t2 + i)
+                AudioFileClip(tick_path).subclip(0, tick_dur).set_start(tick_t0 + i)
             )
 
-    add(correct_path if not is_faux else wrong_path, t3)
-    add(e_path,  t4)
+    add(correct_path if not is_faux else wrong_path, t_ans)
+    add(e_path,  t_expl)
     if os.path.exists(outro_path):
-        clips.append(AudioFileClip(outro_path).subclip(0, outro_dur).set_start(t5))
+        clips.append(AudioFileClip(outro_path).subclip(0, outro_dur).set_start(t_outro))
 
     composite = CompositeAudioClip(clips).set_duration(total)
     return composite, total, {
-        "t_intro":       t0,
-        "t_question":    t1,
-        "t_countdown":   t2,
-        "t_answer":      t3,
-        "t_explication": t4,
-        "t_outro":       t5,
-        "q_dur":         q_dur,
-        "e_dur":         e_dur,
-        "a_dur":         a_dur,
-        "total":         total,
+        "t_intro":        t0,
+        "t_question":     t1,
+        "t_tick":         tick_t0,        # countdown ticks start here (inside question scene)
+        "t_answer":       t_ans,
+        "t_explication":  t_expl,
+        "t_outro":        t_outro,
+        "q_dur":          q_dur,
+        "countdown_dur":  countdown_dur,
+        "e_dur":          e_dur,
+        "a_dur":          a_dur,
+        "total":          total,
     }

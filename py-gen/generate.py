@@ -60,7 +60,6 @@ def preview_scene(scene_name, video_data, settings, out_path):
     import numpy as np
     import renderer.scenes.intro       as intro_scene
     import renderer.scenes.question    as question_scene
-    import renderer.scenes.countdown   as countdown_scene
     import renderer.scenes.answer      as answer_scene
     import renderer.scenes.explanation as explanation_scene
     import renderer.scenes.outro       as outro_scene
@@ -68,7 +67,10 @@ def preview_scene(scene_name, video_data, settings, out_path):
     scenes = {
         "intro":       lambda: intro_scene.make_frame(1.0, video_data, settings),
         "question":    lambda: question_scene.make_frame(1.5, video_data, settings),
-        "countdown":   lambda: countdown_scene.make_frame(1.5, video_data, settings),
+        # countdown widget is now embedded in the question scene at its tail
+        "countdown":   lambda: question_scene.make_frame(
+            6.0, video_data, settings, tick_local=1.5, countdown_dur=3.0,
+        ),
         "answer":      lambda: answer_scene.make_frame(1.0, video_data, settings),
         "explanation": lambda: explanation_scene.make_frame(1.5, video_data, settings),
         "outro":       lambda: outro_scene.make_frame(2.0, video_data, settings),
