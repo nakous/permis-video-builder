@@ -146,6 +146,107 @@ def draw_kinetic_text(draw, text, x, y, size=80, weight="ExtraBold",
     return total_w
 
 
+def draw_word_kinetic(draw, text, x, y, max_width, size=44, weight="Bold",
+                      color=None, line_spacing=1.35,
+                      t=0.0, base_delay=0.0,
+                      word_stagger=0.06, word_duration=0.35,
+                      slide_distance=12, easing=ease_out_back,
+                      shadow=True, shadow_offset=2):
+    """
+    Reveal text word-by-word with stagger. Each word slides up `slide_distance`
+    px and fades in over `word_duration` seconds, starting at
+    `base_delay + i * word_stagger`.
+
+    Word-wraps within `max_width`. Returns total height consumed.
+    """
+    color = color or theme.TEXT_WHITE
+    font  = _get_font(size, weight)
+    d     = _dummy_draw()
+
+    # Wrap into lines first (same algorithm as draw_multiline)
+    words = text.split()
+    lines = []
+    current_words = []
+    for w in words:
+        trial = " ".join(current_words + [w])
+        if d.textbbox((0, 0), trial, font=font)[2] <= max_width:
+            current_words.append(w)
+        else:
+            if current_words:
+                lines.append(current_words)
+            current_words = [w]
+    if current_words:
+        lines.append(current_words)
+
+    line_h = int(size * line_spacing)
+    space_w = int(d.textlength(" ", font=font))
+    word_index = 0
+    for li, line_words in enumerate(lines):
+        cur_x = x
+        iy    = y + li * line_h
+        for word in line_words:
+            elapsed = t - base_delay - word_index * word_stagger
+            if elapsed <= 0:
+                # Not yet visible — but still advance cursor (keeps subsequent words aligned)
+                cur_x += int(d.textlength(word, font=font)) + space_w
+                word_index += 1
+                continue
+            prog = easing(min(1.0, elapsed / word_duration))
+            offset_y = int((1 - prog) * slide_distance)
+            alpha    = _clamp01(prog)
+            col = _blend(color, alpha)
+            if shadow:
+                draw.text((cur_x + shadow_offset, iy + offset_y + shadow_offset),
+                          word, font=font, fill=(0, 0, 0))
+            draw.text((cur_x, iy + offset_y), word, font=font, fill=col)
+            cur_x += int(d.textlength(word, font=font)) + space_w
+            word_index += 1
+    return len(lines) * line_h
+
+
+def draw_letter_spaced(draw, text, x, y, size=32, weight="SemiBold",
+                       color=None, anchor="mt", tracking=10,
+                       shadow=False, shadow_offset=2):
+    """
+    Draw text with real letter-spacing (extra px between chars).
+    `tracking` = extra pixels between adjacent chars (positive widens).
+    `anchor` supports x: l/m/r and y: t/m/b.
+    """
+    color = color or theme.TEXT_WHITE
+    font  = _get_font(size, weight)
+    d     = _dummy_draw()
+
+    # Measure each char width
+    widths = [int(d.textlength(ch, font=font)) for ch in text]
+    total_w = sum(widths) + tracking * max(0, len(text) - 1)
+    bb = d.textbbox((0, 0), text, font=font)
+    h  = bb[3] - bb[1]
+
+    # X anchor
+    if anchor[0] == "m":
+        cur_x = x - total_w // 2
+    elif anchor[0] == "r":
+        cur_x = x - total_w
+    else:
+        cur_x = x
+
+    # Y anchor
+    if len(anchor) > 1 and anchor[1] == "m":
+        base_y = y - h // 2 - bb[1]
+    elif len(anchor) > 1 and anchor[1] == "b":
+        base_y = y - h - bb[1]
+    else:
+        base_y = y
+
+    for i, ch in enumerate(text):
+        if shadow:
+            draw.text((cur_x + shadow_offset, base_y + shadow_offset),
+                      ch, font=font, fill=(0, 0, 0))
+        draw.text((cur_x, base_y), ch, font=font, fill=color)
+        cur_x += widths[i] + tracking
+    return total_w
+
+
 def draw_typewriter(draw, text, x, y, max_width, size=44, weight="Bold",
                     color=None, line_spacing=1.3, anchor_x="left",
                     t=0.0, base_delay=0.0, char_per_sec=45,

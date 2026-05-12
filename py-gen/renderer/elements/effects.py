@@ -277,6 +277,194 @@ def shift_image(img, dx, dy, fill=None):
     return canvas
 
 
+# ─────────────────────────── colored aura (soft blob shadow) ───────────────
+
+_AURA_CACHE = {}
+
+
+def _aura_blob(width, height, color, blur_radius=40, alpha=70, downsample=2):
+    """
+    Pre-render a soft colored blob the size of (width, height) with the given
+    blur. Cached by parameters → repeated paste is virtually free.
+
+    Trick : render at width/downsample then upscale → 4× faster blur for
+    near-identical visual result.
+    """
+    key = (width, height, color, blur_radius, alpha, downsample)
+    cached = _AURA_CACHE.get(key)
+    if cached is not None:
+        return cached
+
+    dw, dh = max(8, width // downsample), max(8, height // downsample)
+    db     = max(2, blur_radius // downsample)
+
+    # Draw an ellipse slightly inset; the blur will spread it out
+    blob = Image.new("RGBA", (dw, dh), (0, 0, 0, 0))
+    d    = ImageDraw.Draw(blob)
+    inset = 6
+    d.ellipse([inset, inset, dw - inset, dh - inset],
+              fill=color + (alpha,))
+    blob = blob.filter(ImageFilter.GaussianBlur(db))
+
+    # Upscale back
+    if downsample > 1:
+        blob = blob.resize((width, height), Image.LANCZOS)
+
+    _AURA_CACHE[key] = blob
+    return blob
+
+
+def aura_behind(base, x, y, w, h, color=None, blur_radius=40,
+                alpha=70, padding=30, downsample=2):
+    """
+    Composite a soft colored aura behind the rectangle (x, y, w, h).
+    Useful to give cards/pills a halo of their accent color.
+
+    `padding` extends the aura beyond the rect on all sides.
+    """
+    color = color or theme.PRIMARY
+    aw = w + padding * 2
+    ah = h + padding * 2
+    blob = _aura_blob(aw, ah, color, blur_radius, alpha, downsample)
+    bx = x - padding
+    by = y - padding
+    base = base.convert("RGBA")
+    base.paste(blob, (bx, by), blob)
+    return base.convert("RGB")
+
+
+# ─────────────────────────── animated bg overlay (hue-shift fake) ──────────
+
+_HUE_OVERLAY_CACHE = {}
+
+
+def _radial_overlay_layer(size, color, radius_frac=0.7, alpha=42):
+    """Pre-render a soft radial gradient layer (centered)."""
+    key = (size, color, radius_frac, alpha)
+    cached = _HUE_OVERLAY_CACHE.get(key)
+    if cached is not None:
+        return cached
+    w, h = size
+    # Render at quarter resolution then upscale — much faster
+    sw, sh = w // 4, h // 4
+    layer = Image.new("RGBA", (sw, sh), (0, 0, 0, 0))
+    arr = np.zeros((sh, sw, 4), dtype=np.uint8)
+    cx, cy = sw / 2, sh / 2
+    R = max(sw, sh) * radius_frac
+    Y, X = np.ogrid[:sh, :sw]
+    d = np.sqrt((X - cx) ** 2 + (Y - cy) ** 2) / R
+    a = np.clip(1 - d, 0, 1) ** 1.6 * alpha
+    arr[:, :, 0] = color[0]
+    arr[:, :, 1] = color[1]
+    arr[:, :, 2] = color[2]
+    arr[:, :, 3] = a.astype(np.uint8)
+    layer = Image.fromarray(arr, "RGBA").resize((w, h), Image.LANCZOS)
+    _HUE_OVERLAY_CACHE[key] = layer
+    return layer
+
+
+def animated_bg_overlay(base, t, period=8.0, amplitude_x=0.15, amplitude_y=0.10,
+                        color=None, alpha=38, radius_frac=0.65):
+    """
+    Drift a soft coloured radial overlay across the bg in a slow Lissajous loop.
+    Cheap : the gradient is precomputed and just translated each frame.
+    """
+    color = color or theme.PRIMARY
+    layer = _radial_overlay_layer(base.size, color, radius_frac=radius_frac, alpha=alpha)
+    w, h  = base.size
+    dx = int(amplitude_x * w * math.sin(2 * math.pi * t / period))
+    dy = int(amplitude_y * h * math.cos(2 * math.pi * t / (period * 1.4)))
+    overlay = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    overlay.paste(layer, (dx, dy), layer)
+    base_rgba = base.convert("RGBA")
+    return Image.alpha_composite(base_rgba, overlay).convert("RGB")
+
+
+# ─────────────────────────── logo "draw-on" reveal ─────────────────────────
+
+def logo_reveal(logo_img, t, dur=0.9, scribble_color=None):
+    """
+    "Draw-on" alternative for logos that aren't SVG.
+
+    Two phases :
+      0 → 0.55*dur  : circular wipe mask reveals the logo from the centre out,
+                      with two scribble lines that scan diagonally over the
+                      hidden portion (motion-design feel)
+      0.55*dur → dur: scribble lines fade out, logo fully visible
+
+    `logo_img` is RGBA. Returns RGBA same size.
+    """
+    scribble_color = scribble_color or theme.PRIMARY
+    if dur <= 0:
+        return logo_img
+
+    w, h = logo_img.size
+    progress = max(0.0, min(1.0, t / dur))
+
+    # ── Wipe mask : circle that grows from the centre ───────────────────────
+    cx, cy = w // 2, h // 2
+    max_r  = int(math.sqrt(cx * cx + cy * cy)) + 4
+    if progress < 0.55:
+        wipe_p = progress / 0.55
+        # ease_out_cubic for a snappier reveal
+        wipe_p = 1 - (1 - wipe_p) ** 3
+        r = int(max_r * wipe_p)
+    else:
+        r = max_r
+
+    mask = Image.new("L", (w, h), 0)
+    md   = ImageDraw.Draw(mask)
+    md.ellipse([cx - r, cy - r, cx + r, cy + r], fill=255)
+
+    # Soft edge on the wipe front
+    if progress < 0.55:
+        mask = mask.filter(ImageFilter.GaussianBlur(6))
+
+    revealed = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    revealed.paste(logo_img, (0, 0), mask)
+
+    # ── Scribble lines : two diagonals that scan over the reveal front ──────
+    if progress < 0.85:
+        scrib_alpha = 1.0 if progress < 0.55 else 1.0 - (progress - 0.55) / 0.30
+        scrib_alpha = max(0.0, min(1.0, scrib_alpha))
+        scrib_overlay = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(scrib_overlay)
+
+        # Two scan lines whose position oscillates around the wipe radius
+        period = 0.45
+        scan_t = (t % period) / period
+        for base_offset in [0.0, 0.5]:
+            phase = (scan_t + base_offset) % 1.0
+            line_y = int(h * phase)
+            # Diagonal slash
+            slope = 0.7
+            x1 = -50
+            y1 = line_y - int(slope * (x1 - cx))
+            x2 = w + 50
+            y2 = line_y - int(slope * (x2 - cx))
+            sd.line([(x1, y1), (x2, y2)],
+                    fill=scribble_color + (int(140 * scrib_alpha),), width=4)
+            # Faint trailing line
+            sd.line([(x1, y1 + 14), (x2, y2 + 14)],
+                    fill=scribble_color + (int(60 * scrib_alpha),), width=2)
+
+        # Mask scribbles to only the still-hidden portion (outside the wipe r)
+        if progress < 0.55:
+            inv_mask = Image.eval(mask, lambda v: 255 - v)
+            scrib_overlay.putalpha(
+                Image.eval(scrib_overlay.getchannel("A"),
+                           lambda v: v).point(lambda v: v)
+            )
+            # Apply inverse mask so scribbles only show outside the revealed area
+            tmp = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+            tmp.paste(scrib_overlay, (0, 0), inv_mask)
+            scrib_overlay = tmp
+
+        revealed = Image.alpha_composite(revealed, scrib_overlay)
+
+    return revealed
+
+
 # ─────────────────────────── ken burns ──────────────────────────────────────
 
 def ken_burns(pil_img, t, total_dur, target_w, target_h,

@@ -20,6 +20,122 @@ SUCCESS        = (16,  185, 129)   # #10B981
 WARNING        = (245, 158, 11)    # #F59E0B
 DANGER         = (239, 68,  68)    # #EF4444
 
+
+# ── Design tokens ────────────────────────────────────────────────────────────
+# 8-pt grid spacing scale
+SPACE = {
+    "0":   0,
+    "xs":  4,
+    "sm":  8,
+    "md":  16,
+    "lg":  24,
+    "xl":  32,
+    "2xl": 48,
+    "3xl": 64,
+    "4xl": 96,
+    "5xl": 128,
+}
+
+# Border radius scale
+RADIUS = {
+    "none":   0,
+    "xs":     4,
+    "sm":     8,
+    "md":     16,
+    "lg":     24,
+    "xl":     32,
+    "2xl":    48,
+    "pill":   9999,   # use ph // 2 in code
+}
+
+# Stroke widths
+STROKE = {
+    "thin":  2,
+    "base":  3,
+    "thick": 4,
+    "bold":  6,
+    "heavy": 8,
+}
+
+# Typography size scale (consistent ratio)
+TEXT_SIZE = {
+    "xs":     22,
+    "sm":     26,
+    "base":   32,
+    "md":     38,
+    "lg":     44,
+    "xl":     52,
+    "2xl":    64,
+    "3xl":    80,
+    "4xl":    96,
+    "display": 140,
+    "hero":   190,
+}
+
+# Font weight aliases (mapped to file names)
+WEIGHT = {
+    "regular":  "Regular",
+    "medium":   "SemiBold",
+    "semibold": "SemiBold",
+    "bold":     "Bold",
+    "black":    "ExtraBold",
+}
+
+# Animation durations in seconds
+DURATION = {
+    "instant":  0.10,
+    "fast":     0.18,
+    "base":     0.30,
+    "slow":     0.45,
+    "slower":   0.60,
+    "slowest":  1.00,
+}
+
+# Shadow / aura definitions
+SHADOW = {
+    "sm":  {"offset": (2, 2),  "blur": 4,  "alpha": 80,  "spread": 0},
+    "md":  {"offset": (3, 5),  "blur": 8,  "alpha": 100, "spread": 2},
+    "lg":  {"offset": (4, 8),  "blur": 16, "alpha": 120, "spread": 4},
+    "aura":{"offset": (0, 0),  "blur": 40, "alpha": 70,  "spread": 12},
+}
+
+# Difficulty mapping (semantic, used everywhere)
+DIFFICULTY = {
+    "facile":    {"color": SUCCESS, "label": "FACILE"},
+    "moyen":     {"color": WARNING, "label": "MOYEN"},
+    "difficile": {"color": DANGER,  "label": "DIFFICILE"},
+}
+
+# Badge/state semantic colors
+BADGE = {
+    "success": SUCCESS,
+    "warning": WARNING,
+    "danger":  DANGER,
+    "info":    PRIMARY,
+}
+
+# Layer alpha presets
+ALPHA = {
+    "veil":      0.25,
+    "scrim":     0.50,
+    "overlay":   0.70,
+    "card":      0.92,
+    "card_soft": 0.55,
+    "pill":      0.90,
+}
+
+# Layout constants for the 9:16 TikTok format
+LAYOUT = {
+    "pad_x":         48,
+    "pad_y":         48,
+    "img_h_ratio":   0.44,    # max image area as fraction of HEIGHT
+    "choice_h":      96,
+    "badge_h":       56,
+    "card_radius":   24,
+    "pill_pad_x":    22,
+    "pill_pad_y":    12,
+}
+
 # ── Font setup — Roboto variable font + fontTools extraction ─────────────────
 _WEIGHTS  = {"Regular": 400, "SemiBold": 600, "Bold": 700, "ExtraBold": 800}
 _VAR_URL  = "https://raw.githubusercontent.com/google/fonts/main/ofl/roboto/Roboto%5Bwdth%2Cwght%5D.ttf"

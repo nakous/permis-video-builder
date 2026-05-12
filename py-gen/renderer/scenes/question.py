@@ -20,23 +20,22 @@ from PIL import Image, ImageDraw
 from config import WIDTH, HEIGHT
 import theme
 from renderer.animations import (
-    ease_out, ease_out_back, interpolate, pulse, breath, lerp_color,
+    ease_out, ease_out_back, interpolate, pulse, lerp_color,
 )
 from renderer.elements.background import gradient_overlay_bottom
-from renderer.elements.typography import draw_multiline, multiline_height, _get_font
+from renderer.elements.typography import multiline_height, _get_font
 from renderer.elements.card import draw_card, draw_pill
 from renderer.elements.image_block import load_image  # noqa: F401
 from renderer.elements.progress_bar import draw_progress_bar
 from renderer.elements import effects
 
-PAD_H    = 48
+# Layout tokens (sourced from theme.LAYOUT / SPACE / RADIUS)
+PAD_H    = theme.LAYOUT["pad_x"]
 TEXT_W   = WIDTH - PAD_H * 2
-CHOICE_H = 96
-CHOICE_R = 24
-GAP      = 20
+CHOICE_H = theme.LAYOUT["choice_h"]
+CHOICE_R = theme.RADIUS["lg"]
+GAP      = theme.SPACE["lg"]
 
-_DIFF_COLORS = {"facile": theme.SUCCESS, "moyen": theme.WARNING, "difficile": theme.DANGER}
-_DIFF_LABELS = {"facile": "FACILE", "moyen": "MOYEN", "difficile": "DIFFICILE"}
 _CHOICE_COLOR = theme.PRIMARY
 
 
@@ -84,29 +83,16 @@ def make_frame(t, video_data, settings, progress=0.0,
         base, start_y=max(0, img_render_h - 110), color=theme.BG_DARK)
     draw = ImageDraw.Draw(base)
 
-    # ── Difficulty pill (breath) + watermark (opacity pulse) ─────────────────
+    # ── Difficulty pill (breath) — watermark removed (UX A) ──────────────────
     WMK_H  = 56
     WMK_CY = 20 + WMK_H // 2
     diff   = video_data.get("difficulty", "facile")
-    dcol   = _DIFF_COLORS.get(diff, theme.SUCCESS)
-    dlbl   = _DIFF_LABELS.get(diff, diff.upper())
-    pad_x  = int(22 * pulse(t, period=2.0, amplitude=0.04))
+    diff_t = theme.DIFFICULTY.get(diff, theme.DIFFICULTY["facile"])
+    dcol, dlbl = diff_t["color"], diff_t["label"]
+    pad_x  = int(theme.LAYOUT["pill_pad_x"] * pulse(t, period=2.0, amplitude=0.04))
     base   = draw_pill(base, 88, WMK_CY, dlbl, dcol,
-                       font_size=26, font_weight="Bold", pad_x=pad_x, pad_y=12)
-
-    wmk_path = _asset(settings["site"]["watermark"])
-    if os.path.exists(wmk_path):
-        wmk = Image.open(wmk_path).convert("RGBA")
-        wmk_w = int(wmk.width * WMK_H / wmk.height)
-        wmk   = wmk.resize((wmk_w, WMK_H), Image.LANCZOS)
-        wmk_alpha = breath(t, period=3.0, low=0.45, high=0.75)
-        r2, g2, b2, a2 = wmk.split()
-        a2 = a2.point(lambda p: int(p * wmk_alpha))
-        wmk.putalpha(a2)
-        base = base.convert("RGBA")
-        base.paste(wmk, (WIDTH - wmk_w - 16, 20), wmk)
-        base = base.convert("RGB")
-
+                       font_size=theme.TEXT_SIZE["sm"], font_weight=theme.WEIGHT["bold"],
+                       pad_x=pad_x, pad_y=theme.LAYOUT["pill_pad_y"])
     draw = ImageDraw.Draw(base)
 
     # ── Layout positions ─────────────────────────────────────────────────────
@@ -116,25 +102,26 @@ def make_frame(t, video_data, settings, progress=0.0,
 
     has_q = bool(q_text and q_text.strip())
     if has_q:
-        q_h = multiline_height(q_text, TEXT_W - 32, 44, "Bold", line_spacing=1.35)
+        q_h = multiline_height(q_text, TEXT_W - 16, 44, "Bold", line_spacing=1.35)
     else:
         q_h = 0
-    SEP_Y       = Q_Y + (q_h + GAP if has_q else 0)
-    CHOICES_TOP = SEP_Y + GAP + 8
+    # No separator any more — pure air gap between question card and choices
+    CHOICES_TOP = Q_Y + (q_h + GAP * 2 if has_q else GAP)
 
-    # ── Category — letter-spaced fade in ─────────────────────────────────────
+    # ── Category — real letter-spacing (UX B) ────────────────────────────────
     cat_prog = ease_out(max(0, (t - 0.15) / 0.35))
     if cat_prog > 0.02 and categorie:
-        draw_multiline(draw, "  ".join(categorie.upper()),
-                       WIDTH // 2, CAT_Y,
-                       max_width=TEXT_W,
-                       size=32, weight="SemiBold",
-                       color=_blend(theme.PRIMARY, cat_prog),
-                       line_spacing=1.2,
-                       anchor_x="center", shadow=False)
+        from renderer.elements.typography import draw_letter_spaced
+        draw_letter_spaced(draw, categorie.upper(),
+                           x=WIDTH // 2, y=CAT_Y,
+                           size=theme.TEXT_SIZE["base"], weight=theme.WEIGHT["semibold"],
+                           color=_blend(theme.PRIMARY, cat_prog),
+                           anchor="mt", tracking=8, shadow=False)
 
-    # ── Question card : GLASSMORPHISM ────────────────────────────────────────
+    # ── Question card : NEUMORPHISM + word-by-word reveal (#2) ───────────────
     if has_q:
+        from renderer.elements.card import draw_neumorphism_card
+        from renderer.elements.typography import draw_word_kinetic
         q_prog = ease_out(max(0, (t - 0.20) / 0.5))
         q_off  = int(interpolate(70, 0, q_prog, 1.0, ease_out))
         if q_prog > 0.05:
@@ -143,40 +130,31 @@ def make_frame(t, video_data, settings, progress=0.0,
             card_x = PAD_H - 16
             card_y = Q_Y + q_off - 12
 
-            base = effects.glass_card(
+            base = draw_neumorphism_card(
                 base, card_x, card_y, card_w, card_h,
-                radius=22, tint=theme.BG_CARD,
-                tint_alpha=0.55, blur_radius=18,
-                border_alpha=int(110 * q_prog), border_width=2,
+                radius=theme.RADIUS["md"],
+                fill=theme.BG_CARD,
+                highlight_alpha=int(28 * q_prog),
+                shadow_alpha=int(140 * q_prog),
+                offset=8,
             )
             draw = ImageDraw.Draw(base)
 
-            bar_h = q_h
-            draw.rectangle(
-                [card_x + 14, card_y + 18, card_x + 14 + 6, card_y + 18 + bar_h],
-                fill=_blend(theme.PRIMARY, q_prog),
-            )
+            # Texte question — padding gauche réduit (28 au lieu de 36) après
+            # suppression de la barre verticale
+            draw_word_kinetic(draw, q_text,
+                              x=card_x + 28, y=card_y + 18,
+                              max_width=TEXT_W - 16,
+                              size=theme.TEXT_SIZE["lg"],
+                              weight=theme.WEIGHT["bold"],
+                              color=theme.TEXT_WHITE,
+                              line_spacing=1.35,
+                              t=t, base_delay=0.35,
+                              word_stagger=0.06, word_duration=0.35,
+                              slide_distance=10,
+                              shadow=True, shadow_offset=2)
 
-            draw_multiline(draw, q_text,
-                           card_x + 36, card_y + 18,
-                           max_width=TEXT_W - 32,
-                           size=44, weight="Bold",
-                           color=_blend(theme.TEXT_WHITE, q_prog),
-                           line_spacing=1.35,
-                           shadow=True, shadow_offset=2)
-
-    # ── Separator (animated wipe + glow dot) ─────────────────────────────────
-    sep_prog = ease_out(max(0, (t - 0.45) / 0.32))
-    if sep_prog > 0.01:
-        sw = int((WIDTH - PAD_H * 2) * sep_prog)
-        draw.line([(PAD_H, SEP_Y), (PAD_H + sw, SEP_Y)],
-                  fill=_blend(theme.PRIMARY, sep_prog), width=3)
-        if sep_prog > 0.4:
-            ds = int(6 * (sep_prog - 0.4) / 0.6)
-            if ds > 0:
-                cxd = PAD_H + sw - ds
-                draw.ellipse([cxd - ds, SEP_Y - ds, cxd + ds, SEP_Y + ds],
-                             fill=theme.PRIMARY_LIGHT)
+    # (séparateur teal supprimé — l'air entre la card et les choix suffit)
 
     # ── Choices ──────────────────────────────────────────────────────────────
     if q_type == "vrai_faux":
@@ -341,35 +319,77 @@ def _draw_vrai_faux_choices(base, t, top_y):
 
 
 def _draw_qcm_choices(base, t, choix, top_y):
+    """
+    UX C : hauteur dynamique. Calcule chaque hauteur de card pour fit le texte.
+    Si l'empilement total déborderait, auto-shrink la font pour rester dans
+    l'espace disponible.
+    """
+    # Padding gauche réduit : plus de barre verticale, juste cercle lettre
+    # left_margin (28) + circle_diameter (68) + gap (20) = 116
+    PAD_TXT_X     = 28 + 68 + 20
+    MAX_TXT_W     = WIDTH - PAD_H - PAD_TXT_X - 24
+    INTER_GAP     = 14
+    CHOICE_FONT   = theme.TEXT_SIZE["lg"]
+    LINE_SPACING  = 1.20
+    MIN_H         = CHOICE_H
+
+    # Compute available height (image area + chrome above already placed → top_y given)
+    # We allow choices down to ~64px from bottom (progress bar margin)
+    avail_h = HEIGHT - top_y - 64
+
+    # Try with default font; shrink if total exceeds avail_h
+    font_sz = CHOICE_FONT
+    while font_sz >= 30:
+        heights = []
+        for c in choix:
+            txt_h = multiline_height(c["texte"], MAX_TXT_W, font_sz,
+                                     theme.WEIGHT["bold"], LINE_SPACING)
+            heights.append(max(MIN_H, txt_h + theme.SPACE["lg"]))
+        total = sum(heights) + INTER_GAP * max(0, len(heights) - 1)
+        if total <= avail_h:
+            break
+        font_sz -= 2
+
+    cy = top_y
     for i, c in enumerate(choix):
         delay = 0.50 + i * 0.13
         cp_card = ease_out(max(0, (t - delay) / 0.42))
+        h_card = heights[i]
         if cp_card < 0.02:
+            cy += h_card + INTER_GAP
             continue
         off  = int(interpolate(WIDTH + 60, 0, cp_card, 1.0, ease_out))
-        cy   = top_y + i * (CHOICE_H + 14)
         lcol = _CHOICE_COLOR
 
+        # Aura colorée derrière la card (#3)
+        from renderer.elements import effects as fx
+        aura_alpha = int(70 * cp_card)
+        if aura_alpha > 5:
+            base = fx.aura_behind(base, PAD_H + off, cy,
+                                  WIDTH - PAD_H * 2, h_card,
+                                  color=lcol, blur_radius=50,
+                                  alpha=aura_alpha, padding=40)
+
         card_fill = tuple(int(lcol[j] * 0.18 + theme.BG_DARK[j] * 0.82) for j in range(3))
-        base = draw_card(base, PAD_H + off, cy, WIDTH - PAD_H * 2, CHOICE_H,
-                         radius=CHOICE_R, fill=card_fill, alpha=0.96,
-                         border_color=lcol, border_width=3)
+        base = draw_card(base, PAD_H + off, cy, WIDTH - PAD_H * 2, h_card,
+                         radius=CHOICE_R, fill=card_fill,
+                         alpha=theme.ALPHA["card"],
+                         border_color=lcol, border_width=theme.STROKE["base"])
         draw = ImageDraw.Draw(base)
 
+        # (barre verticale gauche supprimée — le cercle lettre suffit comme ancre)
         bar_x = PAD_H + off
-        draw.rounded_rectangle([bar_x, cy, bar_x + 10, cy + CHOICE_H],
-                                radius=CHOICE_R, fill=_blend(lcol, cp_card))
 
         # Letter circle pop-in spring (delayed after card)
         cp_letter = ease_out_back(max(0, (t - delay - 0.18) / 0.4))
-        circle_cx = bar_x + 10 + 48
-        circle_cy = cy + CHOICE_H // 2
+        circle_cx = bar_x + 28 + 34                       # left margin + circle radius
+        circle_cy = cy + h_card // 2
         R = max(4, int(34 * min(1.05, cp_letter))) if cp_letter > 0.02 else 0
         if R > 4:
             draw.ellipse([circle_cx - R, circle_cy - R,
                            circle_cx + R, circle_cy + R],
                           fill=_blend(lcol, min(1.0, cp_letter)))
-            lf = _get_font(int(36 * min(1.05, cp_letter)), "ExtraBold")
+            lf = _get_font(int(36 * min(1.05, cp_letter)), theme.WEIGHT["black"])
             lb = draw.textbbox((0, 0), c["lettre"], font=lf)
             draw.text((circle_cx - (lb[2] - lb[0]) // 2 - lb[0] + 1,
                        circle_cy - (lb[3] - lb[1]) // 2 - lb[1] + 1),
@@ -378,17 +398,23 @@ def _draw_qcm_choices(base, t, choix, top_y):
                        circle_cy - (lb[3] - lb[1]) // 2 - lb[1]),
                       c["lettre"], font=lf, fill=theme.TEXT_WHITE)
 
-        cp_text = ease_out(max(0, (t - delay - 0.12) / 0.45))
-        txt_x     = bar_x + 10 + 48 + 34 + 18
-        max_txt_w = WIDTH - PAD_H - (10 + 48 + 34 + 18) - 24
-        txt_h     = multiline_height(c["texte"], max_txt_w, 42, "Bold", 1.25)
-        txt_y     = cy + CHOICE_H // 2 - txt_h // 2
-        draw_multiline(draw, c["texte"],
-                       txt_x, txt_y,
-                       max_width=max_txt_w,
-                       size=42, weight="Bold",
-                       color=_blend(theme.TEXT_WHITE, cp_text),
-                       line_spacing=1.25, shadow=True, shadow_offset=2)
+        # Texte du choix : word-by-word reveal (#2)
+        from renderer.elements.typography import draw_word_kinetic
+        txt_x   = bar_x + PAD_TXT_X     # bar_x + 28 + 34 + 18 = circle right edge + gap
+        txt_h   = multiline_height(c["texte"], MAX_TXT_W, font_sz,
+                                   theme.WEIGHT["bold"], LINE_SPACING)
+        txt_y   = cy + h_card // 2 - txt_h // 2
+        draw_word_kinetic(draw, c["texte"],
+                          x=txt_x, y=txt_y,
+                          max_width=MAX_TXT_W,
+                          size=font_sz, weight=theme.WEIGHT["bold"],
+                          color=theme.TEXT_WHITE,
+                          line_spacing=LINE_SPACING,
+                          t=t, base_delay=delay + 0.18,
+                          word_stagger=0.05, word_duration=0.30,
+                          slide_distance=8,
+                          shadow=True, shadow_offset=2)
+        cy += h_card + INTER_GAP
     return base
 
 

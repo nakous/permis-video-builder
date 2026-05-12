@@ -12,9 +12,9 @@ from PIL import Image, ImageDraw
 from config import WIDTH, HEIGHT
 import theme
 from renderer.animations import (
-    ease_out, ease_out_back, interpolate, pulse, breath,
+    ease_out, ease_out_back, interpolate, pulse,
 )
-from renderer.elements.background import brand_bg, gradient_overlay_bottom
+from renderer.elements.background import brand_bg_animated, gradient_overlay_bottom
 from renderer.elements.typography import (
     draw_text, draw_multiline, multiline_height, _get_font, draw_kinetic_text,
 )
@@ -22,13 +22,10 @@ from renderer.elements.card import draw_card, draw_pill
 from renderer.elements.progress_bar import draw_progress_bar
 from renderer.elements import effects
 
-GAP     = 20
-SIDE_W  = 8
-PT_FONT = 46
-PAD_L   = 60
-
-_DIFF_COLORS = {"facile": theme.SUCCESS, "moyen": theme.WARNING, "difficile": theme.DANGER}
-_DIFF_LABELS = {"facile": "FACILE", "moyen": "MOYEN", "difficile": "DIFFICILE"}
+GAP     = theme.SPACE["lg"]
+SIDE_W  = theme.SPACE["sm"]
+PT_FONT = theme.TEXT_SIZE["lg"]
+PAD_L   = theme.SPACE["3xl"]
 
 
 def _image_contain_size(path, max_w, max_h):
@@ -45,7 +42,7 @@ def make_frame(t, video_data, settings, progress=0.0):
     expl      = video_data["explication"]
     categorie = video_data.get("categorie", "")
 
-    base = brand_bg()
+    base = brand_bg_animated(t)
 
     # ── Image : Ken Burns slow zoom ──────────────────────────────────────────
     MAX_IMG_H = int(HEIGHT * 0.42)
@@ -75,29 +72,16 @@ def make_frame(t, video_data, settings, progress=0.0):
     base = gradient_overlay_bottom(base, start_y=max(0, img_render_h - 100), color=theme.BG_DARK)
     draw = ImageDraw.Draw(base)
 
-    # ── Difficulty badge + watermark ─────────────────────────────────────────
+    # ── Difficulty badge — watermark removed (UX A) ──────────────────────────
     WMK_H  = 56
     WMK_CY = 20 + WMK_H // 2
     diff   = video_data.get("difficulty", "facile")
-    dcol   = _DIFF_COLORS.get(diff, theme.SUCCESS)
-    dlbl   = _DIFF_LABELS.get(diff, diff.upper())
-    pad_x  = int(22 * pulse(t, period=2.0, amplitude=0.04))
+    diff_t = theme.DIFFICULTY.get(diff, theme.DIFFICULTY["facile"])
+    dcol, dlbl = diff_t["color"], diff_t["label"]
+    pad_x  = int(theme.LAYOUT["pill_pad_x"] * pulse(t, period=2.0, amplitude=0.04))
     base   = draw_pill(base, 88, WMK_CY, dlbl, dcol,
-                       font_size=26, font_weight="Bold", pad_x=pad_x, pad_y=12)
-
-    wmk_path = _asset(settings["site"]["watermark"])
-    if os.path.exists(wmk_path):
-        wmk = Image.open(wmk_path).convert("RGBA")
-        wmk_w = int(wmk.width * WMK_H / wmk.height)
-        wmk   = wmk.resize((wmk_w, WMK_H), Image.LANCZOS)
-        wmk_alpha = breath(t, period=3.0, low=0.45, high=0.75)
-        r2, g2, b2, a2 = wmk.split()
-        a2 = a2.point(lambda p: int(p * wmk_alpha))
-        wmk.putalpha(a2)
-        base = base.convert("RGBA")
-        base.paste(wmk, (WIDTH - wmk_w - 16, 20), wmk)
-        base = base.convert("RGB")
-
+                       font_size=theme.TEXT_SIZE["sm"], font_weight=theme.WEIGHT["bold"],
+                       pad_x=pad_x, pad_y=theme.LAYOUT["pill_pad_y"])
     draw = ImageDraw.Draw(base)
 
     # Sep line below image — animated wipe + glow dot
@@ -112,16 +96,15 @@ def make_frame(t, video_data, settings, progress=0.0):
     cat_h   = 40
     TITLE_Y = CAT_Y + cat_h + GAP
 
-    # ── Category ─────────────────────────────────────────────────────────────
+    # ── Category — real letter-spacing (UX B) ────────────────────────────────
     cat_prog = ease_out(min(1.0, t / 0.35))
     if cat_prog > 0.02 and categorie:
-        draw_multiline(draw, "  ".join(categorie.upper()),
-                       WIDTH // 2, CAT_Y,
-                       max_width=WIDTH - 80,
-                       size=30, weight="SemiBold",
-                       color=_blend(theme.PRIMARY, cat_prog),
-                       line_spacing=1.2,
-                       anchor_x="center", shadow=False)
+        from renderer.elements.typography import draw_letter_spaced
+        draw_letter_spaced(draw, categorie.upper(),
+                           x=WIDTH // 2, y=CAT_Y,
+                           size=theme.TEXT_SIZE["base"] - 2, weight=theme.WEIGHT["semibold"],
+                           color=_blend(theme.PRIMARY, cat_prog),
+                           anchor="mt", tracking=7, shadow=False)
 
     # ── Title : kinetic per-char ─────────────────────────────────────────────
     title_txt = expl.get("titre", "")
@@ -137,38 +120,50 @@ def make_frame(t, video_data, settings, progress=0.0):
             shadow=True, shadow_offset=3,
         )
 
-    # ── Points : bar grows down, then text slides in ─────────────────────────
+    # ── Points : auto-fit (UX D) — shrink font until tout rentre au-dessus du badge ──
     points_top = TITLE_Y + title_h + GAP
     points     = expl.get("points", [])[:4]
     MAX_TXT_W  = WIDTH - PAD_L - 36
-    cursor_y   = points_top
+    BADGE_RES  = 90 + 56 + 24    # badge h + bottom margin + safety
+    avail_h    = HEIGHT - points_top - BADGE_RES
 
+    pt_font = PT_FONT
+    line_sp = 1.35
+    while pt_font >= 30:
+        heights = [
+            multiline_height(_strip_emoji(p["texte"]), MAX_TXT_W,
+                             pt_font, theme.WEIGHT["semibold"], line_sp)
+            for p in points
+        ]
+        total = sum(heights) + GAP * max(0, len(heights) - 1)
+        if total <= avail_h:
+            break
+        pt_font -= 2
+
+    cursor_y = points_top
     for i, pt in enumerate(points):
         delay  = 0.55 + i * 0.20
         bar_p  = ease_out(max(0, (t - delay) / 0.32))
         text_p = ease_out(max(0, (t - delay - 0.10) / 0.36))
         txt    = _strip_emoji(pt["texte"])
-        pt_h   = multiline_height(txt, MAX_TXT_W, PT_FONT, "SemiBold", line_spacing=1.35)
+        pt_h   = heights[i]
 
-        # Vertical bar grows from top
         if bar_p > 0.02:
-            bar_full_h = pt_h
-            bar_drawn  = int(bar_full_h * bar_p)
+            bar_drawn = int(pt_h * bar_p)
             draw.rectangle(
                 [PAD_L - 22, cursor_y,
                  PAD_L - 22 + SIDE_W, cursor_y + bar_drawn],
                 fill=_blend(theme.PRIMARY, bar_p),
             )
 
-        # Text : slide in left + fade
         if text_p > 0.02:
             off = int(interpolate(-90, 0, text_p, 1.0, ease_out))
             col = _blend(theme.TEXT_WHITE, text_p)
             draw_multiline(draw, txt,
                            PAD_L + off, cursor_y,
                            max_width=MAX_TXT_W,
-                           size=PT_FONT, weight="SemiBold",
-                           color=col, line_spacing=1.35, shadow=False)
+                           size=pt_font, weight=theme.WEIGHT["semibold"],
+                           color=col, line_spacing=line_sp, shadow=False)
 
         cursor_y += pt_h + GAP
 

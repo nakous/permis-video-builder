@@ -18,7 +18,7 @@ from renderer.animations import (
     ease_spring, ease_out, ease_in_out, ease_out_back, ease_out_bounce,
     interpolate, pulse, breath,
 )
-from renderer.elements.background import brand_bg, draw_glow, draw_decorative_lines
+from renderer.elements.background import brand_bg_animated, draw_glow, draw_decorative_lines
 from renderer.elements.typography import draw_text, draw_kinetic_text, _get_font
 from renderer.elements.image_block import load_image
 from renderer.elements import effects
@@ -31,7 +31,7 @@ LOGO_Y_BASE = (HEIGHT - _CONTENT_H) // 2
 
 
 def make_frame(t, video_data, settings):
-    base = brand_bg()
+    base = brand_bg_animated(t)
     base = draw_decorative_lines(base, color=theme.PRIMARY, alpha=12)
 
     # Floating ambient particles — adds life to the bg
@@ -50,7 +50,7 @@ def make_frame(t, video_data, settings):
 
     logo_y = LOGO_Y_BASE
 
-    # ── Logo : scale-in spring + subtle continuous breath ────────────────────
+    # ── Logo : scale-in + draw-on reveal (#12) + continuous breath ──────────
     logo_path = _asset(settings["site"]["logo"])
     logo_in   = ease_out_back(min(1.0, t / 0.55))
     breath_s  = pulse(max(0, t - 0.55), period=3.0, amplitude=0.025) if t > 0.55 else 1.0
@@ -58,8 +58,11 @@ def make_frame(t, video_data, settings):
 
     if logo_scale > 0.05:
         sz  = max(4, int(LOGO_SZ * logo_scale))
-        lim = load_image(logo_path, sz, sz, radius=sz // 6,
-                         fade_alpha=min(1.0, logo_in * 1.2))
+        lim = load_image(logo_path, sz, sz, radius=sz // 6, fade_alpha=1.0)
+        # Apply draw-on reveal during first 0.95s (combine with scale-in)
+        if t < 1.10:
+            lim = effects.logo_reveal(lim, t, dur=0.95,
+                                      scribble_color=theme.PRIMARY_LIGHT)
         base = base.convert("RGBA")
         base.paste(lim, (CX - sz // 2, logo_y + (LOGO_SZ - sz) // 2), lim)
         base = base.convert("RGB")
@@ -115,11 +118,9 @@ def make_frame(t, video_data, settings):
 
 def _draw_diff_badge_modern(base, video_data, prog, t, cx, y):
     from renderer.elements.card import draw_pill
-    COLORS = {"facile": theme.SUCCESS, "moyen": theme.WARNING, "difficile": theme.DANGER}
-    LABELS = {"facile": "FACILE", "moyen": "MOYEN", "difficile": "DIFFICILE"}
     diff   = video_data.get("difficulty", "facile")
-    color  = COLORS.get(diff, theme.SUCCESS)
-    label  = LABELS.get(diff, diff.upper())
+    diff_t = theme.DIFFICULTY.get(diff, theme.DIFFICULTY["facile"])
+    color, label = diff_t["color"], diff_t["label"]
 
     # Animated glow ring around badge (continuous)
     if prog > 0.6:

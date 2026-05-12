@@ -142,19 +142,26 @@ def _draw_vrai_faux(base, t, reponse, accent, is_vrai):
 
 
 def _draw_qcm(base, t, reponse, choix, accent):
+    # ── "RÉPONSE" pill (UX E : pill PRIMARY plus gros) ───────────────────────
+    label_a = ease_out_back(min(1.0, t / 0.4))
+    if label_a > 0.05:
+        from renderer.elements.card import draw_pill
+        pad_x = int(36 * min(1.05, label_a))
+        pad_y = int(16 * min(1.05, label_a))
+        ly    = GROUP_CY - 260
+        # Aura sous la pill (#3)
+        if label_a > 0.3:
+            aura_a = int(120 * min(1.0, (label_a - 0.3) / 0.7))
+            base = effects.aura_behind(base,
+                                       CX - 200, ly - 50, 400, 100,
+                                       color=theme.PRIMARY, blur_radius=55,
+                                       alpha=aura_a, padding=50)
+        base = draw_pill(base, CX, ly, "RÉPONSE", theme.PRIMARY,
+                          font_size=int(40 * min(1.05, label_a)),
+                          font_weight="ExtraBold",
+                          pad_x=pad_x, pad_y=pad_y,
+                          text_color=theme.BG_DARK)
     draw = ImageDraw.Draw(base)
-
-    # ── "Réponse :" label ────────────────────────────────────────────────────
-    label_a = ease_spring(min(1.0, t / 0.4))
-    lsize   = int(60 * label_a)
-    if lsize >= 10:
-        font = _get_font(lsize, "Bold")
-        d2   = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-        bb   = d2.textbbox((0, 0), "Réponse :", font=font)
-        lx   = CX - (bb[2] - bb[0]) // 2 - bb[0]
-        ly   = GROUP_CY - 280
-        draw.text((lx + 3, ly + 3), "Réponse :", font=font, fill=(0, 0, 0))
-        draw.text((lx, ly), "Réponse :", font=font, fill=theme.TEXT_MEDIUM)
 
     # ── Big answer text : kinetic + glow ─────────────────────────────────────
     ans_p = ease_out_back(min(1.0, max(0, (t - 0.1)) / 0.55))

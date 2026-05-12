@@ -31,9 +31,28 @@ def radial_gradient(center_color, edge_color=None, cx=None, cy=None, radius=None
     return Image.fromarray(arr, "RGB")
 
 
+_BRAND_BG_CACHE = None
+
+
 def brand_bg():
-    """Standard brand background — dark top, slightly warmer bottom."""
-    return linear_gradient(theme.BG_DARK, (22, 32, 50))
+    """Standard brand background — dark top, slightly warmer bottom. Cached."""
+    global _BRAND_BG_CACHE
+    if _BRAND_BG_CACHE is None:
+        _BRAND_BG_CACHE = linear_gradient(theme.BG_DARK, (22, 32, 50))
+    return _BRAND_BG_CACHE.copy()
+
+
+def brand_bg_animated(t):
+    """Brand bg with a slow drifting colored overlay → fond qui respire."""
+    from renderer.elements import effects as fx
+    bg = brand_bg()
+    bg = fx.animated_bg_overlay(bg, t, period=9.0,
+                                 amplitude_x=0.18, amplitude_y=0.12,
+                                 color=theme.PRIMARY, alpha=34, radius_frac=0.55)
+    bg = fx.animated_bg_overlay(bg, t + 4.5, period=11.0,
+                                 amplitude_x=0.20, amplitude_y=0.14,
+                                 color=theme.ACCENT, alpha=24, radius_frac=0.50)
+    return bg
 
 
 def dark_overlay(img, alpha=0.7):
