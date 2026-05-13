@@ -20,7 +20,9 @@ from renderer.animations import (
     interpolate, pulse, shake,
 )
 from renderer.elements.background import radial_gradient
-from renderer.elements.typography import _get_font, draw_kinetic_text
+from renderer.elements.typography import (
+    _get_font, draw_kinetic_text, _wrap_lines, _text_length_mixed,
+)
 from renderer.elements.progress_bar import draw_progress_bar
 from renderer.elements import effects
 
@@ -165,48 +167,76 @@ def _draw_qcm(base, t, reponse, choix, accent):
 
     # ── Big answer text : kinetic + glow ─────────────────────────────────────
     ans_p = ease_out_back(min(1.0, max(0, (t - 0.1)) / 0.55))
-    asize = int(100 * min(1.05, ans_p))
     ans_y = GROUP_CY - 180
+    max_w = WIDTH - 80
+
+    # Auto-shrink to fit one line; wrap to multi-line if even the smallest
+    # size doesn't fit. Sizes are picked from a small ladder.
+    chosen_size = None
+    for sz in (100, 90, 80, 72, 64):
+        if _text_length_mixed(reponse, sz, "ExtraBold") <= max_w:
+            chosen_size = sz
+            break
+    if chosen_size is None:
+        chosen_size = 64
+        ans_lines = _wrap_lines(reponse, max_w, chosen_size, "ExtraBold")
+    else:
+        ans_lines = [reponse]
+
+    asize = int(chosen_size * min(1.05, ans_p))
+    line_h_ans = int(asize * 1.15)
+    extra_ans_h = (len(ans_lines) - 1) * line_h_ans
+
     if asize >= 12:
-        # Glow behind
-        base = _label_glow(base, ans_y + asize // 2, accent, t)
+        glow_y = ans_y + (len(ans_lines) * line_h_ans) // 2
+        base = _label_glow(base, glow_y, accent, t)
         draw = ImageDraw.Draw(base)
-        draw_kinetic_text(
-            draw, reponse,
-            x=CX, y=ans_y,
-            size=asize, weight="ExtraBold",
-            color=theme.TEXT_WHITE, anchor="mt",
-            t=t, base_delay=0.10, char_stagger=0.045,
-            char_duration=0.55, slide_distance=24,
-            shadow=True, shadow_offset=5,
-        )
+        delay = 0.10
+        for li, line in enumerate(ans_lines):
+            line_y = ans_y + li * line_h_ans
+            draw_kinetic_text(
+                draw, line,
+                x=CX, y=line_y,
+                size=asize, weight="ExtraBold",
+                color=theme.TEXT_WHITE, anchor="mt",
+                t=t, base_delay=delay, char_stagger=0.045,
+                char_duration=0.55, slide_distance=24,
+                shadow=True, shadow_offset=5,
+            )
+            delay += len(line) * 0.045
 
     # ── Bad choices : strike-through that draws left→right ───────────────────
     bad_choix = [c for c in choix if not reponse.startswith(c["lettre"])]
+    bad_size  = 40
+    bad_line_h = 50
+    bad_gap    = 40
+    y_cursor   = GROUP_CY + 80 + extra_ans_h
     for i, c in enumerate(bad_choix):
         bp_card = ease_out(max(0, (t - 0.55 - i * 0.18) / 0.32))
+        label   = f"{c['lettre']} - {c['texte']}"
+        lines   = _wrap_lines(label, max_w, bad_size, "SemiBold")
         if bp_card < 0.02:
+            y_cursor += len(lines) * bad_line_h + bad_gap
             continue
-        by    = GROUP_CY + 80 + i * 90
-        label = f"{c['lettre']} - {c['texte']}"
-        font  = _get_font(40, "SemiBold")
-        d2    = ImageDraw.Draw(Image.new("RGB", (1, 1)))
-        bb    = d2.textbbox((0, 0), label, font=font)
-        lw    = bb[2] - bb[0]
-        lh    = bb[3] - bb[1]
-        lx    = CX - lw // 2 - bb[0]
-
-        col = _blend(theme.TEXT_MEDIUM, bp_card * 0.6)
-        draw.text((lx, by), label, font=font, fill=col)
-
-        # Strike : line that draws left to right (delayed by 0.15s)
+        font    = _get_font(bad_size, "SemiBold")
+        d2      = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+        col     = _blend(theme.TEXT_MEDIUM, bp_card * 0.6)
         bp_line = ease_in_out(max(0, (t - 0.55 - i * 0.18 - 0.15) / 0.35))
-        if bp_line > 0.02:
-            mid_y = by + lh // 2
-            line_w = int((lw + 8) * bp_line)
-            # Layered red bar
-            draw.line([(lx - 4, mid_y), (lx - 4 + line_w, mid_y)],
-                      fill=theme.DANGER, width=5)
+
+        for li, ln in enumerate(lines):
+            bb = d2.textbbox((0, 0), ln, font=font)
+            lw = bb[2] - bb[0]
+            lh = bb[3] - bb[1]
+            lx = CX - lw // 2 - bb[0]
+            ly = y_cursor + li * bad_line_h
+            draw.text((lx, ly), ln, font=font, fill=col)
+            if bp_line > 0.02:
+                mid_y  = ly + lh // 2
+                line_w = int((lw + 8) * bp_line)
+                draw.line([(lx - 4, mid_y), (lx - 4 + line_w, mid_y)],
+                          fill=theme.DANGER, width=5)
+
+        y_cursor += len(lines) * bad_line_h + bad_gap
     return base
 
 

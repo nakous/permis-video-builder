@@ -17,6 +17,7 @@ from renderer.animations import (
 from renderer.elements.background import brand_bg_animated, gradient_overlay_bottom
 from renderer.elements.typography import (
     draw_text, draw_multiline, multiline_height, _get_font, draw_kinetic_text,
+    _wrap_lines,
 )
 from renderer.elements.card import draw_card, draw_pill
 from renderer.elements.progress_bar import draw_progress_bar
@@ -120,11 +121,33 @@ def make_frame(t, video_data, settings, progress=0.0):
             shadow=True, shadow_offset=3,
         )
 
+    # ── Bonne réponse block : compute its height (sits above the badge) ─────
+    reponse       = video_data.get("reponse", "")
+    BR_PILL_H     = 46
+    BR_GAP_INNER  = 12
+    BR_GAP_BELOW  = 22    # gap entre le bloc bonne réponse et le badge
+    BR_GAP_ABOVE  = GAP   # gap entre les points et le bloc bonne réponse
+    BR_TEXT_W     = WIDTH - 80
+    br_text_size  = 40
+    br_lines      = []
+    br_line_h     = int(br_text_size * 1.25)
+    br_block_h    = 0
+    if reponse:
+        br_lines = _wrap_lines(reponse, BR_TEXT_W, br_text_size, "ExtraBold")
+        while len(br_lines) > 2 and br_text_size > 28:
+            br_text_size -= 2
+            br_lines = _wrap_lines(reponse, BR_TEXT_W, br_text_size, "ExtraBold")
+        br_line_h  = int(br_text_size * 1.25)
+        br_text_h  = len(br_lines) * br_line_h
+        br_block_h = BR_PILL_H + BR_GAP_INNER + br_text_h
+
     # ── Points : auto-fit (UX D) — shrink font until tout rentre au-dessus du badge ──
     points_top = TITLE_Y + title_h + GAP
     points     = expl.get("points", [])[:4]
     MAX_TXT_W  = WIDTH - PAD_L - 36
     BADGE_RES  = 90 + 56 + 24    # badge h + bottom margin + safety
+    if br_block_h:
+        BADGE_RES += br_block_h + BR_GAP_ABOVE + BR_GAP_BELOW
     avail_h    = HEIGHT - points_top - BADGE_RES
 
     pt_font = PT_FONT
@@ -166,6 +189,38 @@ def make_frame(t, video_data, settings, progress=0.0):
                            color=col, line_spacing=line_sp, shadow=False)
 
         cursor_y += pt_h + GAP
+
+    # ── Bonne réponse : pill + texte centré, anim slide-up bounce ────────────
+    if br_block_h:
+        badge_top   = HEIGHT - 56 - 90
+        block_top   = badge_top - BR_GAP_BELOW - br_block_h
+        br_prog     = ease_out_back(max(0, (t - 1.05) / 0.50))
+        if br_prog > 0.05:
+            alpha    = min(1.0, br_prog)
+            slide_y  = int(interpolate(40, 0, min(1.0, br_prog), 1.0, ease_out))
+            block_top_anim = block_top + slide_y
+
+            pill_cy = block_top_anim + BR_PILL_H // 2
+            base = draw_pill(
+                base, WIDTH // 2, pill_cy, "BONNE RÉPONSE",
+                theme.SUCCESS,
+                font_size=24, font_weight="ExtraBold",
+                pad_x=22, pad_y=10,
+                text_color=theme.BG_DARK,
+            )
+            draw = ImageDraw.Draw(base)
+
+            font_br = _get_font(br_text_size, "ExtraBold")
+            d_dummy = ImageDraw.Draw(Image.new("RGB", (1, 1)))
+            col_br  = _blend(theme.TEXT_WHITE, alpha)
+            text_top = block_top_anim + BR_PILL_H + BR_GAP_INNER
+            for li, ln in enumerate(br_lines):
+                bb = d_dummy.textbbox((0, 0), ln, font=font_br)
+                lw = bb[2] - bb[0]
+                lx = (WIDTH - lw) // 2 - bb[0]
+                ly = text_top + li * br_line_h
+                draw.text((lx + 2, ly + 2), ln, font=font_br, fill=(0, 0, 0))
+                draw.text((lx, ly), ln, font=font_br, fill=col_br)
 
     # ── Bottom badge : bounce + pulse glow ───────────────────────────────────
     badge_prog = ease_out_back(max(0, (t - 1.20) / 0.45))
