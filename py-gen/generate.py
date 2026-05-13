@@ -37,7 +37,7 @@ def generate_video(video_data, settings, out_path):
     print(f"  Building video frames…")
 
     video_clip = build_video(video_data, settings, timings)
-    video_clip = video_clip.set_audio(audio_clip)
+    video_clip = video_clip.with_audio(audio_clip)
 
     print(f"  Exporting -> {out_path}")
     t0 = time.time()
@@ -88,7 +88,11 @@ def preview_scene(scene_name, video_data, settings, out_path):
 
 def main():
     parser = argparse.ArgumentParser(description="TestPermis.fr — Video generator")
-    parser.add_argument("--id",      type=int,  default=None, help="Generate only video #ID")
+    parser.add_argument("--id",       type=int,  default=None, help="Generate only video #ID")
+    parser.add_argument("--from-id",  type=int,  default=None, dest="from_id",
+                        help="Start from video #ID (skip all videos before it)")
+    parser.add_argument("--skip-existing", action="store_true",
+                        help="Skip videos whose output MP4 already exists")
     parser.add_argument("--preview", type=str,  default=None, help="Preview scene name (no MP4)")
     args = parser.parse_args()
 
@@ -102,8 +106,20 @@ def main():
             print(f"No video with id={args.id}")
             return
 
+    if args.from_id is not None:
+        videos = [v for v in videos if v["id"] >= args.from_id]
+        if not videos:
+            print(f"No video with id >= {args.from_id}")
+            return
+
     for v in videos:
         slug = v["sujet"].lower().replace(" ", "-")
+        mp4  = os.path.join(OUTPUT_DIR, f"video-{v['id']}-{slug}.mp4")
+
+        if args.skip_existing and not args.preview and os.path.exists(mp4):
+            print(f"\n  Video {v['id']} — {v['sujet']} — already exists, skipped.")
+            continue
+
         print(f"\n{'='*60}")
         print(f"  Video {v['id']} — {v['sujet']} ({v['categorie']})")
         print(f"{'='*60}")
@@ -112,7 +128,6 @@ def main():
             png = os.path.join(OUTPUT_DIR, f"preview-{v['id']}-{args.preview}.png")
             preview_scene(args.preview, v, settings, png)
         else:
-            mp4 = os.path.join(OUTPUT_DIR, f"video-{v['id']}-{slug}.mp4")
             generate_video(v, settings, mp4)
 
     print("\nAll done.")

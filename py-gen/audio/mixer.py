@@ -11,22 +11,21 @@ Timeline:
 """
 
 import os
-from moviepy.audio.io.AudioFileClip import AudioFileClip
-from moviepy.audio.AudioClip import CompositeAudioClip, concatenate_audioclips
-import moviepy.audio.fx.all as afx
+from moviepy import AudioFileClip, CompositeAudioClip, concatenate_audioclips
+import moviepy.audio.fx as afx
 
 
 def _vol(clip, factor):
     if factor == 1.0:
         return clip
-    return clip.fx(afx.volumex, factor)
+    return clip.with_effects([afx.MultiplyVolume(factor)])
 
 
 def _load(path, start=0.0, volume=1.0):
     """Return an AudioFileClip positioned at `start` with volume applied."""
     if not os.path.exists(path):
         return None
-    clip = AudioFileClip(path).set_start(start)
+    clip = AudioFileClip(path).with_start(start)
     return _vol(clip, volume)
 
 
@@ -93,7 +92,7 @@ def build_audio(video_data, settings, countdown_dur):
     if os.path.exists(bg_path):
         bg = AudioFileClip(bg_path)
         loops = int(total / bg.duration) + 2
-        bg_loop = concatenate_audioclips([bg] * loops).subclip(0, total)
+        bg_loop = concatenate_audioclips([bg] * loops).subclipped(0, total)
         clips.append(_vol(bg_loop, bg_vol))
 
     def add(path, start, vol=1.0):
@@ -103,7 +102,7 @@ def build_audio(video_data, settings, countdown_dur):
 
     if os.path.exists(intro_path):
         clips.append(_vol(
-            AudioFileClip(intro_path).subclip(0, intro_dur).set_start(t0),
+            AudioFileClip(intro_path).subclipped(0, intro_dur).with_start(t0),
             intro_vol,
         ))
     add(q_path, t1)
@@ -112,18 +111,18 @@ def build_audio(video_data, settings, countdown_dur):
         tick_dur = min(1.0, duration_of(tick_path))
         for i in range(int(countdown_dur)):
             clips.append(
-                AudioFileClip(tick_path).subclip(0, tick_dur).set_start(tick_t0 + i)
+                AudioFileClip(tick_path).subclipped(0, tick_dur).with_start(tick_t0 + i)
             )
 
     add(correct_path if not is_faux else wrong_path, t_ans)
     add(e_path,  t_expl)
     if os.path.exists(outro_path):
         clips.append(_vol(
-            AudioFileClip(outro_path).subclip(0, outro_dur).set_start(t_outro),
+            AudioFileClip(outro_path).subclipped(0, outro_dur).with_start(t_outro),
             outro_vol,
         ))
 
-    composite = CompositeAudioClip(clips).set_duration(total)
+    composite = CompositeAudioClip(clips).with_duration(total)
     return composite, total, {
         "t_intro":        t0,
         "t_question":     t1,

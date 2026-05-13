@@ -11,7 +11,7 @@ the image.
 """
 import numpy as np
 from PIL import Image
-from moviepy.video.VideoClip import VideoClip
+from moviepy import VideoClip
 
 from config import WIDTH, HEIGHT, FPS
 import renderer.scenes.intro       as intro_scene
@@ -80,7 +80,7 @@ def build_video(video_data, settings, timings):
 
         return np.asarray(img)
 
-    clip = VideoClip(make_frame, duration=total).set_fps(FPS)
+    clip = VideoClip(make_frame, duration=total).with_fps(FPS)
     return clip
 
 

@@ -407,13 +407,22 @@ opacity = interpolate(0, 1, elapsed, ease_out) if elapsed < 0.5 else 1
 
 ```bash
 # Générer toutes les vidéos
-python generate.py
+python3 generate.py
 
 # Générer une seule vidéo
-python generate.py --id 1
+python3 generate.py --id 1
+
+# Commencer à partir d'une vidéo (ex: reprendre depuis la 7)
+python3 generate.py --from-id 7
+
+# Sauter les vidéos dont le MP4 existe déjà
+python3 generate.py --skip-existing
+
+# Combiné : reprendre là où on s'est arrêté
+python3 generate.py --skip-existing --from-id 7
 
 # Prévisualiser une scène sans générer le MP4
-python generate.py --preview question --id 1
+python3 generate.py --preview question --id 1
 ```
 
 ---

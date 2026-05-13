@@ -209,7 +209,7 @@ def _draw_countdown_widget(base, tick_t, total_dur, img_x, img_w, img_h):
         return base
 
     R       = max(8, int(CD_RADIUS * scale))
-    bg_R    = R - CD_BG_PAD
+    bg_R    = max(1, R - CD_BG_PAD)
     stroke  = max(4, int(CD_STROKE * scale))
     fill_frac = max(0.0, 1.0 - tick_t / total_dur)
     sub_t     = tick_t - math.floor(tick_t)            # 0..1 within current second
