@@ -223,11 +223,20 @@ def font_path(weight="Regular"):
 
 
 # ── Fallback font for glyphs missing in Roboto (arrows, ✓, ✗, etc.) ─────────
+# Order matters : first existing file with broad symbol coverage wins.
+# NB : Helvetica.ttc is last because it lacks arrows (→ ← ↑ ↓).
 _FALLBACK_CANDIDATES = [
+    # macOS — symbol / full-unicode coverage
+    "/System/Library/Fonts/Apple Symbols.ttf",
+    "/System/Library/Fonts/Supplemental/Arial Unicode.ttf",
+    "/Library/Fonts/Arial Unicode.ttf",
+    # Windows
     r"C:\Windows\Fonts\seguisym.ttf",   # Segoe UI Symbol — best coverage on Win
     r"C:\Windows\Fonts\seguiemj.ttf",   # Segoe UI Emoji — fallback of fallback
     r"C:\Windows\Fonts\arial.ttf",
+    # Linux
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    # macOS last resort (⚠ no arrow glyphs)
     "/System/Library/Fonts/Helvetica.ttc",
 ]
 

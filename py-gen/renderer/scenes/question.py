@@ -17,7 +17,7 @@ Layout (top→bottom):
 """
 import os, math, numpy as np
 from PIL import Image, ImageDraw
-from config import WIDTH, HEIGHT
+from config import WIDTH, HEIGHT, ORIENTATION
 import theme
 from renderer.animations import (
     ease_out, ease_out_back, interpolate, pulse, lerp_color,
@@ -25,7 +25,7 @@ from renderer.animations import (
 from renderer.elements.background import gradient_overlay_bottom
 from renderer.elements.typography import multiline_height, _get_font
 from renderer.elements.card import draw_card, draw_pill
-from renderer.elements.image_block import load_image  # noqa: F401
+from renderer.elements.image_block import load_image, blur_backdrop, contain_dims  # noqa: F401
 from renderer.elements.progress_bar import draw_progress_bar
 from renderer.elements import effects
 
@@ -53,34 +53,85 @@ def make_frame(t, video_data, settings, progress=0.0,
     categorie = video_data.get("categorie", "")
     img_path  = _asset(q["media"])
 
-    # ── Image with subtle Ken Burns zoom ─────────────────────────────────────
-    MAX_IMG_H = int(HEIGHT * 0.44)
-    img_render_w, img_render_h = _image_contain_size(img_path, WIDTH, MAX_IMG_H)
-    img_x = (WIDTH - img_render_w) // 2
-
     img_alpha = ease_out(min(1.0, t / 0.5))
     KB_DUR = 8.0
-    try:
-        raw = Image.open(img_path).convert("RGB")
-        kb_img = effects.ken_burns(
-            raw, t, KB_DUR,
-            target_w=img_render_w, target_h=img_render_h,
-            start_scale=1.0, end_scale=1.06, pan_x=0.0, pan_y=-0.15,
-        ).convert("RGBA")
-        if img_alpha < 1.0:
-            r, g, b, a = kb_img.split()
-            a = a.point(lambda p: int(p * img_alpha))
-            kb_img = Image.merge("RGBA", (r, g, b, a))
-    except Exception:
-        kb_img = Image.new("RGBA", (img_render_w, img_render_h), theme.BG_CARD2)
 
+    # ── Compute layout regions based on orientation ──────────────────────────
+    if ORIENTATION == "landscape":
+        # 2-column : image full-height on left half, content on right half
+        img_render_w = WIDTH // 2
+        img_render_h = HEIGHT
+        img_x = 0
+        content_x  = WIDTH // 2 + 36
+        content_w  = WIDTH // 2 - 72
+        cat_top    = 56
+    else:
+        # current portrait : image wide on top, content stacked below
+        MAX_IMG_H = int(HEIGHT * 0.44)
+        img_render_w, img_render_h = _image_contain_size(img_path, WIDTH, MAX_IMG_H)
+        img_x = (WIDTH - img_render_w) // 2
+        content_x  = PAD_H
+        content_w  = WIDTH - PAD_H * 2
+        cat_top    = img_render_h + GAP
+
+    # ── Image with subtle Ken Burns zoom ─────────────────────────────────────
     base = Image.new("RGB", (WIDTH, HEIGHT), theme.BG_DARK)
     base = base.convert("RGBA")
-    base.paste(kb_img, (img_x, 0), kb_img)
+
+    if ORIENTATION == "landscape":
+        # Blurred backdrop (cover, static) + Ken Burns contained foreground
+        bd = blur_backdrop(img_path, img_render_w, img_render_h)
+        base.paste(bd.convert("RGBA"), (img_x, 0))
+
+        fg_w, fg_h = contain_dims(img_path, img_render_w, img_render_h)
+        try:
+            raw = Image.open(img_path).convert("RGB")
+            fg = effects.ken_burns(
+                raw, t, KB_DUR,
+                target_w=fg_w, target_h=fg_h,
+                start_scale=1.0, end_scale=1.06, pan_x=0.0, pan_y=-0.08,
+            ).convert("RGBA")
+            if img_alpha < 1.0:
+                r, g, b, a = fg.split()
+                a = a.point(lambda p: int(p * img_alpha))
+                fg = Image.merge("RGBA", (r, g, b, a))
+        except Exception:
+            fg = Image.new("RGBA", (fg_w, fg_h), theme.BG_CARD2)
+
+        fx = img_x + (img_render_w - fg_w) // 2
+        fy = (img_render_h - fg_h) // 2
+        base.paste(fg, (fx, fy), fg)
+    else:
+        try:
+            raw = Image.open(img_path).convert("RGB")
+            kb_img = effects.ken_burns(
+                raw, t, KB_DUR,
+                target_w=img_render_w, target_h=img_render_h,
+                start_scale=1.0, end_scale=1.06,
+                pan_x=0.0, pan_y=-0.15,
+            ).convert("RGBA")
+            if img_alpha < 1.0:
+                r, g, b, a = kb_img.split()
+                a = a.point(lambda p: int(p * img_alpha))
+                kb_img = Image.merge("RGBA", (r, g, b, a))
+        except Exception:
+            kb_img = Image.new("RGBA", (img_render_w, img_render_h), theme.BG_CARD2)
+        base.paste(kb_img, (img_x, 0), kb_img)
     base = base.convert("RGB")
 
-    base = gradient_overlay_bottom(
-        base, start_y=max(0, img_render_h - 110), color=theme.BG_DARK)
+    if ORIENTATION == "landscape":
+        # Soft vertical seam between image and content
+        base = base.convert("RGBA")
+        seam = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
+        sd   = ImageDraw.Draw(seam)
+        for dx in range(60):
+            a = int(180 * (1 - dx / 60) ** 1.5)
+            sd.line([(img_render_w + dx, 0), (img_render_w + dx, HEIGHT)],
+                    fill=theme.BG_DARK + (a,))
+        base = Image.alpha_composite(base, seam).convert("RGB")
+    else:
+        base = gradient_overlay_bottom(
+            base, start_y=max(0, img_render_h - 110), color=theme.BG_DARK)
     draw = ImageDraw.Draw(base)
 
     # ── Difficulty pill (breath) — watermark removed (UX A) ──────────────────
@@ -90,19 +141,20 @@ def make_frame(t, video_data, settings, progress=0.0,
     diff_t = theme.DIFFICULTY.get(diff, theme.DIFFICULTY["facile"])
     dcol, dlbl = diff_t["color"], diff_t["label"]
     pad_x  = int(theme.LAYOUT["pill_pad_x"] * pulse(t, period=2.0, amplitude=0.04))
-    base   = draw_pill(base, 88, WMK_CY, dlbl, dcol,
+    pill_cx = 88
+    base   = draw_pill(base, pill_cx, WMK_CY, dlbl, dcol,
                        font_size=theme.TEXT_SIZE["sm"], font_weight=theme.WEIGHT["bold"],
                        pad_x=pad_x, pad_y=theme.LAYOUT["pill_pad_y"])
     draw = ImageDraw.Draw(base)
 
     # ── Layout positions ─────────────────────────────────────────────────────
-    CAT_Y = img_render_h + GAP
+    CAT_Y = cat_top
     cat_h = 52
     Q_Y   = CAT_Y + cat_h + GAP
 
     has_q = bool(q_text and q_text.strip())
     if has_q:
-        q_h = multiline_height(q_text, TEXT_W - 16, 44, "Bold", line_spacing=1.35)
+        q_h = multiline_height(q_text, content_w - 16, 44, "Bold", line_spacing=1.35)
     else:
         q_h = 0
     # No separator any more — pure air gap between question card and choices
@@ -112,8 +164,9 @@ def make_frame(t, video_data, settings, progress=0.0,
     cat_prog = ease_out(max(0, (t - 0.15) / 0.35))
     if cat_prog > 0.02 and categorie:
         from renderer.elements.typography import draw_letter_spaced
+        cat_x = content_x + content_w // 2
         draw_letter_spaced(draw, categorie.upper(),
-                           x=WIDTH // 2, y=CAT_Y,
+                           x=cat_x, y=CAT_Y,
                            size=theme.TEXT_SIZE["base"], weight=theme.WEIGHT["semibold"],
                            color=_blend(theme.PRIMARY, cat_prog),
                            anchor="mt", tracking=8, shadow=False)
@@ -125,9 +178,9 @@ def make_frame(t, video_data, settings, progress=0.0,
         q_prog = ease_out(max(0, (t - 0.20) / 0.5))
         q_off  = int(interpolate(70, 0, q_prog, 1.0, ease_out))
         if q_prog > 0.05:
-            card_w = WIDTH - (PAD_H - 16) * 2
+            card_w = content_w
             card_h = q_h + 36
-            card_x = PAD_H - 16
+            card_x = content_x
             card_y = Q_Y + q_off - 12
 
             base = draw_neumorphism_card(
@@ -144,7 +197,7 @@ def make_frame(t, video_data, settings, progress=0.0,
             # suppression de la barre verticale
             draw_word_kinetic(draw, q_text,
                               x=card_x + 28, y=card_y + 18,
-                              max_width=TEXT_W - 16,
+                              max_width=content_w - 16,
                               size=theme.TEXT_SIZE["lg"],
                               weight=theme.WEIGHT["bold"],
                               color=theme.TEXT_WHITE,
@@ -158,9 +211,9 @@ def make_frame(t, video_data, settings, progress=0.0,
 
     # ── Choices ──────────────────────────────────────────────────────────────
     if q_type == "vrai_faux":
-        base = _draw_vrai_faux_choices(base, t, CHOICES_TOP)
+        base = _draw_vrai_faux_choices(base, t, CHOICES_TOP, content_x, content_w)
     else:
-        base = _draw_qcm_choices(base, t, choix, CHOICES_TOP)
+        base = _draw_qcm_choices(base, t, choix, CHOICES_TOP, content_x, content_w)
 
     # ── Countdown widget (bottom-right of image, only during tick phase) ─────
     if tick_local is not None:
@@ -294,7 +347,7 @@ def _image_contain_size(path, max_w, max_h):
     return int(sw * scale), int(sh * scale)
 
 
-def _draw_vrai_faux_choices(base, t, top_y):
+def _draw_vrai_faux_choices(base, t, top_y, x_left, width):
     options = [("VRAI", theme.SUCCESS), ("FAUX", theme.DANGER)]
     for i, (label, color) in enumerate(options):
         delay = 0.55 + i * 0.13
@@ -304,21 +357,21 @@ def _draw_vrai_faux_choices(base, t, top_y):
         off  = int(interpolate(WIDTH, 0, ease_out(min(1.0, cp)), 1.0))
         cy   = top_y + i * (CHOICE_H + 14)
 
-        base = draw_card(base, PAD_H + off, cy, WIDTH - PAD_H * 2, CHOICE_H,
+        base = draw_card(base, x_left + off, cy, width, CHOICE_H,
                          radius=CHOICE_R,
                          fill=tuple(int(c * 0.25) for c in color),
                          alpha=0.92, border_color=color, border_width=3)
         draw = ImageDraw.Draw(base)
         font = _get_font(46, "ExtraBold")
         bb   = draw.textbbox((0, 0), label, font=font)
-        lx   = WIDTH // 2 - (bb[2] - bb[0]) // 2 - bb[0] + off
+        lx   = x_left + width // 2 - (bb[2] - bb[0]) // 2 - bb[0] + off
         ly   = cy + CHOICE_H // 2 - (bb[3] - bb[1]) // 2 - bb[1]
         draw.text((lx + 2, ly + 2), label, font=font, fill=(0, 0, 0))
         draw.text((lx, ly), label, font=font, fill=_blend(color, min(1.0, cp)))
     return base
 
 
-def _draw_qcm_choices(base, t, choix, top_y):
+def _draw_qcm_choices(base, t, choix, top_y, x_left, width):
     """
     UX C : hauteur dynamique. Calcule chaque hauteur de card pour fit le texte.
     Si l'empilement total déborderait, auto-shrink la font pour rester dans
@@ -327,7 +380,7 @@ def _draw_qcm_choices(base, t, choix, top_y):
     # Padding gauche réduit : plus de barre verticale, juste cercle lettre
     # left_margin (28) + circle_diameter (68) + gap (20) = 116
     PAD_TXT_X     = 28 + 68 + 20
-    MAX_TXT_W     = WIDTH - PAD_H - PAD_TXT_X - 24
+    MAX_TXT_W     = width - PAD_TXT_X - 24
     INTER_GAP     = 14
     CHOICE_FONT   = theme.TEXT_SIZE["lg"]
     LINE_SPACING  = 1.20
@@ -365,20 +418,20 @@ def _draw_qcm_choices(base, t, choix, top_y):
         from renderer.elements import effects as fx
         aura_alpha = int(70 * cp_card)
         if aura_alpha > 5:
-            base = fx.aura_behind(base, PAD_H + off, cy,
-                                  WIDTH - PAD_H * 2, h_card,
+            base = fx.aura_behind(base, x_left + off, cy,
+                                  width, h_card,
                                   color=lcol, blur_radius=50,
                                   alpha=aura_alpha, padding=40)
 
         card_fill = tuple(int(lcol[j] * 0.18 + theme.BG_DARK[j] * 0.82) for j in range(3))
-        base = draw_card(base, PAD_H + off, cy, WIDTH - PAD_H * 2, h_card,
+        base = draw_card(base, x_left + off, cy, width, h_card,
                          radius=CHOICE_R, fill=card_fill,
                          alpha=theme.ALPHA["card"],
                          border_color=lcol, border_width=theme.STROKE["base"])
         draw = ImageDraw.Draw(base)
 
         # (barre verticale gauche supprimée — le cercle lettre suffit comme ancre)
-        bar_x = PAD_H + off
+        bar_x = x_left + off
 
         # Letter circle pop-in spring (delayed after card)
         cp_letter = ease_out_back(max(0, (t - delay - 0.18) / 0.4))

@@ -13,7 +13,7 @@ Modern look :
 import math
 import numpy as np
 from PIL import Image, ImageDraw
-from config import WIDTH, HEIGHT
+from config import WIDTH, HEIGHT, ORIENTATION
 import theme
 from renderer.animations import (
     ease_spring, ease_out, ease_out_back, ease_in, ease_in_out,

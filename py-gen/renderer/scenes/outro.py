@@ -10,7 +10,7 @@ OUTRO — modern call-to-action.
 """
 import os, numpy as np
 from PIL import Image, ImageDraw
-from config import WIDTH, HEIGHT
+from config import WIDTH, HEIGHT, ORIENTATION
 import theme
 from renderer.animations import (
     ease_out, ease_out_back, interpolate, pulse,
@@ -25,15 +25,38 @@ from renderer.elements.social_logos import get_logo
 
 CX = WIDTH // 2
 
-LOGO_SZ  = 200
-LOGO_Y   = (HEIGHT - 758) // 2 - 40
-NAME_Y   = LOGO_Y + LOGO_SZ + 32
-CTA_Y    = NAME_Y + 130          # plus de séparateur ni d'URL en double
-CTA_H    = 120
-SOC_Y    = CTA_Y  + CTA_H + 80
-SOC_LOGO_SZ   = 76
-SOC_GAP       = 28               # gap horizontal entre logo et handle
-SOC_ROW_H     = 86               # hauteur d'une ligne sociale
+if ORIENTATION == "landscape":
+    LOGO_SZ       = 140
+    LOGO_Y        = 90
+    NAME_Y        = LOGO_Y + LOGO_SZ + 16
+    NAME_SIZE     = 64
+    CTA_Y         = NAME_Y + 100
+    CTA_H         = 96
+    CTA_W_PAD     = 360            # padding latéral pour la CTA en landscape
+    CTA_TXT_SIZE  = 32
+    SOC_Y         = CTA_Y + CTA_H + 56
+    SOC_LOGO_SZ   = 60
+    SOC_GAP       = 22
+    SOC_ROW_H     = 74
+    SOC_HANDLE_SZ = 32
+    GLOW_OFFSET_Y = -40
+    GLOW_R_BASE   = 280
+else:
+    LOGO_SZ       = 200
+    LOGO_Y        = (HEIGHT - 758) // 2 - 40
+    NAME_Y        = LOGO_Y + LOGO_SZ + 32
+    NAME_SIZE     = 82
+    CTA_Y         = NAME_Y + 130
+    CTA_H         = 120
+    CTA_W_PAD     = 72
+    CTA_TXT_SIZE  = 36
+    SOC_Y         = CTA_Y + CTA_H + 80
+    SOC_LOGO_SZ   = 76
+    SOC_GAP       = 28
+    SOC_ROW_H     = 86
+    SOC_HANDLE_SZ = 34
+    GLOW_OFFSET_Y = -100
+    GLOW_R_BASE   = 380
 
 
 def make_frame(t, video_data, settings, progress=1.0):
@@ -46,8 +69,8 @@ def make_frame(t, video_data, settings, progress=1.0):
 
     # Pulsing glow
     gl = Image.new("RGBA", (WIDTH, HEIGHT), (0, 0, 0, 0))
-    glow_r = int(380 * pulse(t, period=2.4, amplitude=0.08))
-    draw_glow(ImageDraw.Draw(gl), CX, HEIGHT // 2 - 100, glow_r, theme.PRIMARY, steps=45)
+    glow_r = int(GLOW_R_BASE * pulse(t, period=2.4, amplitude=0.08))
+    draw_glow(ImageDraw.Draw(gl), CX, HEIGHT // 2 + GLOW_OFFSET_Y, glow_r, theme.PRIMARY, steps=45)
     base = Image.alpha_composite(base.convert("RGBA"), gl).convert("RGB")
     draw = ImageDraw.Draw(base)
 
@@ -74,7 +97,7 @@ def make_frame(t, video_data, settings, progress=1.0):
     draw_kinetic_text(
         draw, site["name"],
         x=CX, y=NAME_Y,
-        size=82, weight="ExtraBold",
+        size=NAME_SIZE, weight="ExtraBold",
         color=theme.PRIMARY, anchor="mt",
         t=t, base_delay=0.35, char_stagger=0.045,
         char_duration=0.5, slide_distance=26,
@@ -87,11 +110,12 @@ def make_frame(t, video_data, settings, progress=1.0):
     cta_p_in   = ease_out_back(max(0, (t - 0.7) / 0.55))
     cta_y_anim = int(interpolate(HEIGHT, CTA_Y, min(1.0, cta_p_in), 1.0))
     cta_pulse = pulse(max(0, t - 1.2), period=1.4, amplitude=0.025, base=1.0) if t > 1.2 else 1.0
-    pulse_scale_w = int((WIDTH - 72) * cta_pulse)
+    cta_full_w = WIDTH - CTA_W_PAD
+    pulse_scale_w = int(cta_full_w * cta_pulse)
     pulse_scale_h = int(CTA_H * cta_pulse)
-    cta_x_off = (WIDTH - 72 - pulse_scale_w) // 2
+    cta_x_off = (cta_full_w - pulse_scale_w) // 2
 
-    base = draw_card(base, 36 + cta_x_off, cta_y_anim,
+    base = draw_card(base, (CTA_W_PAD // 2) + cta_x_off, cta_y_anim,
                      pulse_scale_w, pulse_scale_h,
                      radius=32, fill=theme.PRIMARY, alpha=0.96)
     draw = ImageDraw.Draw(base)
@@ -99,7 +123,7 @@ def make_frame(t, video_data, settings, progress=1.0):
     if cta_p_in > 0.3:
         ca   = ease_out(max(0, (cta_p_in - 0.3) / 0.5))
         txt  = site.get("callToAction", "Testez vos connaissances !")
-        font = _get_font(36, "ExtraBold")
+        font = _get_font(CTA_TXT_SIZE, "ExtraBold")
         bb   = draw.textbbox((0, 0), txt, font=font)
         tx   = CX - (bb[2] - bb[0]) // 2 - bb[0]
         ty_  = cta_y_anim + pulse_scale_h // 2 - (bb[3] - bb[1]) // 2 - bb[1]
@@ -120,12 +144,13 @@ def make_frame(t, video_data, settings, progress=1.0):
 
 
 def _draw_socials(base, t, soc_items):
-    """3 lines stacked : [logo]  @handle  — bounce-in stagger from below."""
+    """3 lignes empilées, centrées : [logo]  @handle — entrée bounce décalée.
+    Même disposition en portrait et en landscape (Instagram / YouTube / X)."""
     if not soc_items:
         return base
 
     # Compute layout : centred horizontally, max width based on widest handle
-    font = _get_font(34, theme.WEIGHT["semibold"])
+    font = _get_font(SOC_HANDLE_SZ, theme.WEIGHT["semibold"])
     d_dummy = ImageDraw.Draw(Image.new("RGB", (1, 1)))
     handle_widths = [int(d_dummy.textlength(h, font=font)) for _, h in soc_items]
     max_handle_w  = max(handle_widths)

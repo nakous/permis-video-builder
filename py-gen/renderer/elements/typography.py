@@ -47,7 +47,11 @@ def _supported_codepoints(path):
         _CMAP_CACHE[path] = None
         return None
     try:
-        tt = TTFont(path)
+        # .ttc is a font collection — TTFont needs an explicit face index
+        if path.lower().endswith(".ttc"):
+            tt = TTFont(path, fontNumber=0)
+        else:
+            tt = TTFont(path)
         cmap = set(tt.getBestCmap().keys())
     except Exception:
         cmap = None

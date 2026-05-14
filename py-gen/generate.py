@@ -1,6 +1,8 @@
 """
 python generate.py              — génère toutes les vidéos
 python generate.py --id 1       — génère la vidéo n°1 uniquement
+python generate.py --id 1 --format 16:9   — génère en paysage
+python generate.py --id 1 --format both   — génère les 2 formats
 python generate.py --preview question --id 1  — sauvegarde un PNG de la scène
 """
 
@@ -9,13 +11,22 @@ import os
 import json
 import argparse
 import time
+import subprocess
+import datetime
+
+# Parse --format BEFORE any other import : config.py reads VIDEO_FORMAT
+# at import time, and scenes capture WIDTH/HEIGHT at their own import time.
+for _i, _a in enumerate(sys.argv):
+    if _a == "--format" and _i + 1 < len(sys.argv):
+        os.environ["VIDEO_FORMAT"] = sys.argv[_i + 1]
+        break
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 import theme
 theme.load_fonts()
 
-from config import DATA_FILE, OUTPUT_DIR, CODEC, AUDIO_CODEC, BITRATE, COUNTDOWN_DURATION
+from config import DATA_FILE, OUTPUT_DIR, CODEC, AUDIO_CODEC, BITRATE, COUNTDOWN_DURATION, VIDEO_FORMAT
 from audio.mixer import build_audio
 from renderer.compositor import build_video
 
@@ -23,6 +34,60 @@ from renderer.compositor import build_video
 def load_data():
     with open(DATA_FILE, encoding="utf-8") as f:
         return json.load(f)
+
+
+# ── SEO / métadonnées vidéo ──────────────────────────────────────────────────
+# Date de départ de la campagne — les vidéos sont datées de façon échelonnée
+# (≈ SEO_CADENCE_PER_WEEK par semaine) pour ne pas toutes porter la même date.
+SEO_BASE_DATE        = datetime.date(2026, 5, 14)
+SEO_CADENCE_PER_WEEK = 3
+SEO_AUTHOR           = "testpermis.fr"
+
+
+def _video_date(video_id):
+    """Date échelonnée : video #N → base + décalage (cadence 3/semaine)."""
+    days = int((video_id - 1) * 7 / SEO_CADENCE_PER_WEEK)
+    return (SEO_BASE_DATE + datetime.timedelta(days=days)).isoformat()
+
+
+def _build_metadata(video_data):
+    """
+    Construit les args ffmpeg `-metadata` pour le MP4.
+      • date    : échelonnée par vidéo (pas toutes la même)
+      • auteur  : testpermis.fr (fixe)
+      • le reste (titre, description, genre…) : dynamique depuis videos-data.json
+    """
+    expl  = video_data.get("explication", {})
+    q     = video_data.get("question", {})
+    sujet = video_data.get("sujet", "").strip()
+    cat   = video_data.get("categorie", "").strip()
+    titre = (expl.get("titre") or sujet).strip()
+
+    # Description : énoncé de la question + points clés de l'explication
+    desc_parts = []
+    if q.get("texte"):
+        desc_parts.append(q["texte"].strip())
+    for p in expl.get("points", []):
+        if p.get("texte"):
+            desc_parts.append("• " + p["texte"].strip())
+    description = "  ".join(desc_parts)[:600]
+
+    meta = {
+        "title":       f"{sujet} — Code de la route | testpermis.fr",
+        "artist":      SEO_AUTHOR,
+        "author":      SEO_AUTHOR,
+        "album":       f"Quiz Code de la route — {cat}" if cat else "Quiz Code de la route",
+        "date":        _video_date(video_data["id"]),
+        "genre":       cat or "Éducation",
+        "comment":     titre,
+        "description": description,
+        "synopsis":    description,
+    }
+    params = []
+    for k, v in meta.items():
+        if v:
+            params += ["-metadata", f"{k}={v}"]
+    return params
 
 
 def generate_video(video_data, settings, out_path):
@@ -49,6 +114,7 @@ def generate_video(video_data, settings, out_path):
         bitrate=BITRATE,
         threads=4,
         logger="bar",
+        ffmpeg_params=_build_metadata(video_data),
     )
     elapsed = time.time() - t0
     print(f"  Done in {elapsed:.1f}s")
@@ -94,7 +160,36 @@ def main():
     parser.add_argument("--skip-existing", action="store_true",
                         help="Skip videos whose output MP4 already exists")
     parser.add_argument("--preview", type=str,  default=None, help="Preview scene name (no MP4)")
+    parser.add_argument("--format",  type=str,  default="9:16",
+                        choices=["9:16", "16:9", "both"],
+                        help="Output aspect ratio (default 9:16). 'both' = les deux")
     args = parser.parse_args()
+
+    # --format both : relance le script en sous-processus pour chaque format
+    # (WIDTH/HEIGHT sont figés à l'import, donc un process distinct par format).
+    if args.format == "both":
+        passthrough = [a for a in sys.argv[1:]]
+        # retire l'éventuel --format both des args transmis
+        cleaned = []
+        skip = False
+        for a in passthrough:
+            if skip:
+                skip = False
+                continue
+            if a == "--format":
+                skip = True
+                continue
+            cleaned.append(a)
+        for fmt in ("9:16", "16:9"):
+            print(f"\n{'#'*60}\n#  FORMAT {fmt}\n{'#'*60}")
+            ret = subprocess.run(
+                [sys.executable, os.path.abspath(__file__), *cleaned, "--format", fmt]
+            )
+            if ret.returncode != 0:
+                print(f"  ⚠️  Échec du rendu {fmt} (code {ret.returncode})")
+                return
+        print("\nTous les formats terminés.")
+        return
 
     data     = load_data()
     settings = data["settings"]
@@ -112,20 +207,22 @@ def main():
             print(f"No video with id >= {args.from_id}")
             return
 
+    fmt_suffix = "-landscape" if VIDEO_FORMAT == "16:9" else ""
+
     for v in videos:
         slug = v["sujet"].lower().replace(" ", "-")
-        mp4  = os.path.join(OUTPUT_DIR, f"video-{v['id']}-{slug}.mp4")
+        mp4  = os.path.join(OUTPUT_DIR, f"video-{v['id']}-{slug}{fmt_suffix}.mp4")
 
         if args.skip_existing and not args.preview and os.path.exists(mp4):
             print(f"\n  Video {v['id']} — {v['sujet']} — already exists, skipped.")
             continue
 
         print(f"\n{'='*60}")
-        print(f"  Video {v['id']} — {v['sujet']} ({v['categorie']})")
+        print(f"  Video {v['id']} — {v['sujet']} ({v['categorie']}) — {VIDEO_FORMAT}")
         print(f"{'='*60}")
 
         if args.preview:
-            png = os.path.join(OUTPUT_DIR, f"preview-{v['id']}-{args.preview}.png")
+            png = os.path.join(OUTPUT_DIR, f"preview-{v['id']}-{args.preview}{fmt_suffix}.png")
             preview_scene(args.preview, v, settings, png)
         else:
             generate_video(v, settings, mp4)

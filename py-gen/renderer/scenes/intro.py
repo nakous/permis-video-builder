@@ -12,7 +12,7 @@ Layered animations:
 """
 import os, math, numpy as np
 from PIL import Image, ImageDraw
-from config import WIDTH, HEIGHT
+from config import WIDTH, HEIGHT, ORIENTATION
 import theme
 from renderer.animations import (
     ease_spring, ease_out, ease_in_out, ease_out_back, ease_out_bounce,
@@ -25,8 +25,31 @@ from renderer.elements import effects
 
 CX = WIDTH // 2
 
-LOGO_SZ    = 260
-_CONTENT_H = 660
+if ORIENTATION == "landscape":
+    LOGO_SZ     = 200
+    _CONTENT_H  = 560
+    NAME_SIZE   = 76
+    SEP_HALF_W  = 200
+    CAT_SIZE    = 38
+    BADGE_FONT  = 38
+    BADGE_PADX  = 44
+    BADGE_PADY  = 18
+    SEP_OFFSET  = 96
+    CAT_OFFSET  = 24
+    BADGE_OFFSET = 92
+else:
+    LOGO_SZ     = 260
+    _CONTENT_H  = 660
+    NAME_SIZE   = 92
+    SEP_HALF_W  = 240
+    CAT_SIZE    = 46
+    BADGE_FONT  = 44
+    BADGE_PADX  = 54
+    BADGE_PADY  = 22
+    SEP_OFFSET  = 118
+    CAT_OFFSET  = 28
+    BADGE_OFFSET = 105
+
 LOGO_Y_BASE = (HEIGHT - _CONTENT_H) // 2
 
 
@@ -69,11 +92,11 @@ def make_frame(t, video_data, settings):
         draw = ImageDraw.Draw(base)
 
     # ── Site name : kinetic per-char ──────────────────────────────────────────
-    name_y = logo_y + LOGO_SZ + 40
+    name_y = logo_y + LOGO_SZ + (32 if ORIENTATION == "landscape" else 40)
     draw_kinetic_text(
         draw, settings["site"]["name"],
         x=CX, y=name_y,
-        size=92, weight="ExtraBold",
+        size=NAME_SIZE, weight="ExtraBold",
         color=theme.PRIMARY, anchor="mt",
         t=t, base_delay=0.42, char_stagger=0.05,
         char_duration=0.55, slide_distance=32,
@@ -81,10 +104,10 @@ def make_frame(t, video_data, settings):
     )
 
     # ── Separator : wipe from center ─────────────────────────────────────────
-    sep_y  = name_y + 118
+    sep_y  = name_y + SEP_OFFSET
     sep_p  = ease_out(max(0, (t - 0.78) / 0.45))
     if sep_p > 0:
-        sw = int(240 * sep_p)
+        sw = int(SEP_HALF_W * sep_p)
         draw.line([(CX - sw, sep_y), (CX + sw, sep_y)],
                   fill=_blend(theme.ACCENT, sep_p), width=4)
         # subtle glow dot at center
@@ -95,12 +118,12 @@ def make_frame(t, video_data, settings):
                              fill=theme.PRIMARY_LIGHT)
 
     # ── Category : kinetic letter-spaced ──────────────────────────────────────
-    cat_y = sep_y + 28
+    cat_y = sep_y + CAT_OFFSET
     cat   = "  ".join(video_data["categorie"].upper())
     draw_kinetic_text(
         draw, cat,
         x=CX, y=cat_y,
-        size=46, weight="Bold",
+        size=CAT_SIZE, weight="Bold",
         color=theme.TEXT_MEDIUM, anchor="mt",
         t=t, base_delay=0.95, char_stagger=0.025,
         char_duration=0.4, slide_distance=18,
@@ -108,7 +131,7 @@ def make_frame(t, video_data, settings):
     )
 
     # ── Difficulty badge : bounce + glow ring ────────────────────────────────
-    badge_y = cat_y + 105
+    badge_y = cat_y + BADGE_OFFSET
     badge_p = ease_out_back(max(0, (t - 1.25) / 0.55))
     if badge_p > 0.02:
         base = _draw_diff_badge_modern(base, video_data, badge_p, t, cx=CX, y=badge_y)
@@ -140,10 +163,10 @@ def _draw_diff_badge_modern(base, video_data, prog, t, cx, y):
                             + theme.BG_DARK[i] * (1 - min(1.0, prog * 1.1)))
                        for i in range(3))
     base = draw_pill(base, cx, y, label, pill_color,
-                     font_size=int(44 * min(1.05, prog)),
+                     font_size=int(BADGE_FONT * min(1.05, prog)),
                      font_weight="ExtraBold",
-                     pad_x=int(54 * min(1.05, prog)),
-                     pad_y=int(22 * min(1.05, prog)))
+                     pad_x=int(BADGE_PADX * min(1.05, prog)),
+                     pad_y=int(BADGE_PADY * min(1.05, prog)))
     return base
 
 
